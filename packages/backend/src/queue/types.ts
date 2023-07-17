@@ -18,7 +18,7 @@ export type DeliverJobData = {
 };
 
 export type InboxJobData = {
-	activity: IActivity;
+	activity: IActivity | null;
 	signature: httpSignature.IParsedSignature;
 };
 

@@ -54,6 +54,9 @@ export class InboxProcessorService {
 	public async process(job: Bull.Job<InboxJobData>): Promise<string> {
 		const signature = job.data.signature;	// HTTP-signature
 		const activity = job.data.activity;
+		if (activity === null) {
+			return 'Empty activity data';
+		}
 
 		//#region Log
 		const info = Object.assign({}, activity);

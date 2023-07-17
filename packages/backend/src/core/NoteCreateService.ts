@@ -619,6 +619,12 @@ export class NoteCreateService implements OnApplicationShutdown {
 			if (this.userEntityService.isLocalUser(user)) {
 				(async () => {
 					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
+
+					// Skip deliver if local only notes
+					if (noteActivity === null) {
+						return;
+					}
+
 					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
 
 					// メンションされたリモートユーザーに配送
