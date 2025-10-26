@@ -5,6 +5,7 @@
 
 import { promises as fsp } from 'fs';
 import { compress } from 'wawoff2';
+import { logger } from './logger.js';
 
 interface HarfbuzzWasm extends WebAssembly.Exports {
 	memory: WebAssembly.Memory;
@@ -37,7 +38,7 @@ export async function generateSubsettedFont(ttfPath: string, unicodeRangeValues:
 	let i = 0;
 	for (const [key, unicodeValues] of unicodeRangeValues) {
 		i++;
-		console.log(`Generating subset ${i} of ${unicodeRangeValues.size}...`);
+		logger.info('Generating subset %d of %d...', i, unicodeRangeValues.size);
 
 		// サブセット入力を作成
 		const input = harfbuzzWasm.hb_subset_input_create_or_fail();

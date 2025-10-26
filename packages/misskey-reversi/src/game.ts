@@ -118,10 +118,20 @@ export class Game {
 
 	private calcTurn() {
 		// ターン計算
-		this.turn =
-			this.canPutSomewhere(!this.prevColor) ? !this.prevColor :
-			this.canPutSomewhere(this.prevColor!) ? this.prevColor : //eslint-disable-line @typescript-eslint/no-non-null-assertion
-			null;
+		const previousColor = this.prevColor;
+		const opponentColor = previousColor === null ? BLACK : !previousColor;
+
+		if (this.canPutSomewhere(opponentColor)) {
+			this.turn = opponentColor;
+			return;
+		}
+
+		if (previousColor !== null && this.canPutSomewhere(previousColor)) {
+			this.turn = previousColor;
+			return;
+		}
+
+		this.turn = null;
 	}
 
 	public undo() {
@@ -181,24 +191,31 @@ export class Game {
 
 			const found: number[] = []; // 挟めるかもしれない相手の石を入れておく配列
 			let [x, y] = this.posToXy(initPos);
-			while (true) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+			for (;;) {
 				[x, y] = nextPos(x, y);
 
 				// 座標が指し示す位置がボード外に出たとき
 				if (this.opts.loopedBoard && this.xyToPos(
 					(x = ((x % this.mapWidth) + this.mapWidth) % this.mapWidth),
-					(y = ((y % this.mapHeight) + this.mapHeight) % this.mapHeight)) === initPos) {
+					(y = ((y % this.mapHeight) + this.mapHeight) % this.mapHeight),
+				) === initPos) {
 					// 盤面の境界でループし、自分が石を置く位置に戻ってきたとき、挟めるようにしている (ref: Test4のマップ)
 					return found;
-				} else if (x === -1 || y === -1 || x === this.mapWidth || y === this.mapHeight) return []; // 挟めないことが確定 (盤面外に到達)
+				}
+
+				if (x === -1 || y === -1 || x === this.mapWidth || y === this.mapHeight) {
+					return [];
+				}
 
 				const pos = this.xyToPos(x, y);
-				if (this.mapDataGet(pos) === 'null') return []; // 挟めないことが確定 (配置不可能なマスに到達)
+				if (this.mapDataGet(pos) === 'null') return [];
 				const stone = this.board[pos];
-				if (stone === null) return []; // 挟めないことが確定 (石が置かれていないマスに到達)
-				if (stone === enemyColor) found.push(pos); // 挟めるかもしれない (相手の石を発見)
-				if (stone === color) return found; // 挟めることが確定 (対となる自分の石を発見)
+				if (stone === null) return [];
+				if (stone === enemyColor) found.push(pos);
+				if (stone === color) return found;
 			}
+
+			return found;
 		};
 
 		return ([] as number[]).concat(...diffVectors.map(effectsInLine));

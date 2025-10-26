@@ -7,6 +7,7 @@ import { promises as fsp, existsSync } from 'fs';
 import path from 'path';
 import glob from 'tiny-glob';
 import { generateSubsettedFont } from './subsetter.js';
+import { logger } from './logger.js';
 
 const filesToScan = {
 	frontend: 'packages/frontend/src/**/*.{ts,vue}',
@@ -46,14 +47,14 @@ async function main() {
 	// 5. 各チャンクごとにファイルをスキャンして、使用されているアイコンを抽出
 	const unicodeRangeValues = new Map<string, number[]>();
 	for (const [key, dir] of Object.entries(filesToScan)) {
-		console.log(`Scanning ${key}...`);
+		logger.info('Scanning %s...', key);
 
 		const iconsToPack = new Set<string>();
 
 		const cwd = path.resolve(process.cwd(), '../../');
 		const files = await glob(dir, { cwd });
 		for (const file of files) {
-			//console.log(`Scanning ${file}`);
+			// logger.info('Scanning %s', file);
 			const content = await fsp.readFile(path.resolve(cwd, file), 'utf-8');
 			const classRegex = /ti-[a-z0-9-]+/g;
 			let matches: RegExpExecArray | null;
@@ -134,10 +135,22 @@ async function main() {
 			// 使用されているアイコンのclassとの対応を追記
 			for (const icon of unicodeValuesForKey) {
 				const iconClasses = Array.from(rgMap.entries()).filter(([, unicode]) => parseInt(unicode, 16) === icon);
-				if (iconClasses.length > 1) {
-					console.warn(`[WARN] Multiple classes for the same unicode: ${iconClasses.map(([cls]) => cls).join(', ')}. Maybe it's deprecated?`);
+				const classNames = iconClasses.map(([className]) => className);
+
+				if (classNames.length === 0) {
+					logger.warn('No CSS class mapping found for unicode U+%s; skipping rule.', icon.toString(16));
+					continue;
 				}
-				const iconSelector = iconClasses.map(([className]) => `.${className}::before`).join(', ');
+
+				if (classNames.length > 1) {
+					logger.warn(
+						'Multiple classes mapped to unicode U+%s: %s. Maybe it is deprecated?',
+						icon.toString(16),
+						classNames.join(', '),
+					);
+				}
+
+				const iconSelector = classNames.map((className) => `.${className}::before`).join(', ');
 				cssRules.push(`${iconSelector} { content: "\\${icon.toString(16)}"; }`);
 			}
 		}
@@ -146,10 +159,10 @@ async function main() {
 	}));
 
 	const end = performance.now();
-	console.log(`Done in ${Math.round((end - start) * 100) / 100}ms`);
+	logger.info('Done in %dms', Math.round((end - start) * 100) / 100);
 }
 
 main().catch((err) => {
-	console.error(err);
+	logger.error(err);
 	process.exit(1);
 });
