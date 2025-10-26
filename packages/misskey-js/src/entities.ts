@@ -1,107 +1,107 @@
 import { ModerationLogPayloads } from './consts.js';
 import type {
-    Announcement,
-    EmojiDetailed,
-    MeDetailed,
-    Note as AutogenNote,
-    Page,
-    Role,
-    RolePolicies,
-    User,
-    UserDetailedNotMe,
+	Announcement,
+	EmojiDetailed,
+	MeDetailed,
+	Note as AutogenNote,
+	Page,
+	Role,
+	RolePolicies,
+	User,
+	UserDetailedNotMe,
 } from './autogen/models.js';
 import type { AuthenticationResponseJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/types';
 
 export * from './autogen/entities.js';
 export type {
-    Error,
-    UserLite,
-    UserDetailedNotMeOnly,
-    MeDetailedOnly,
-    UserDetailedNotMe,
-    MeDetailed,
-    UserDetailed,
-    User,
-    UserList,
-    Achievement,
-    AchievementName,
-    Ad,
-    Announcement,
-    App,
-    NoteDraft,
-    NoteReaction,
-    NoteReactionWithNote,
-    NoteFavorite,
-    Notification,
-    DriveFile,
-    DriveFolder,
-    Following,
-    Muting,
-    RenoteMuting,
-    Blocking,
-    Hashtag,
-    InviteCode,
-    Page,
-    PageBlock,
-    Channel,
-    QueueCount,
-    QueueMetrics,
-    QueueJob,
-    Antenna,
-    Clip,
-    FederationInstance,
-    GalleryPost,
-    EmojiSimple,
-    EmojiDetailed,
-    EmojiDetailedAdmin,
-    Flash,
-    Signin,
-    RoleCondFormulaLogics,
-    RoleCondFormulaValueNot,
-    RoleCondFormulaValueIsLocalOrRemote,
-    RoleCondFormulaValueUserSettingBooleanSchema,
-    RoleCondFormulaValueAssignedRole,
-    RoleCondFormulaValueCreated,
-    RoleCondFormulaFollowersOrFollowingOrNotes,
-    RoleCondFormulaValue,
-    RoleLite,
-    Role,
-    RolePolicies,
-    ReversiGameLite,
-    ReversiGameDetailed,
-    MetaLite,
-    MetaDetailedOnly,
-    MetaDetailed,
-    UserWebhook,
-    SystemWebhook,
-    AbuseReportNotificationRecipient,
-    ChatMessage,
-    ChatMessageLite,
-    ChatMessageLiteFor1on1,
-    ChatMessageLiteForRoom,
-    ChatRoom,
-    ChatRoomInvitation,
-    ChatRoomMembership,
-    Note as AutogenNote,
+	Error,
+	UserLite,
+	UserDetailedNotMeOnly,
+	MeDetailedOnly,
+	UserDetailedNotMe,
+	MeDetailed,
+	UserDetailed,
+	User,
+	UserList,
+	Achievement,
+	AchievementName,
+	Ad,
+	Announcement,
+	App,
+	NoteDraft,
+	NoteReaction,
+	NoteReactionWithNote,
+	NoteFavorite,
+	Notification,
+	DriveFile,
+	DriveFolder,
+	Following,
+	Muting,
+	RenoteMuting,
+	Blocking,
+	Hashtag,
+	InviteCode,
+	Page,
+	PageBlock,
+	Channel,
+	QueueCount,
+	QueueMetrics,
+	QueueJob,
+	Antenna,
+	Clip,
+	FederationInstance,
+	GalleryPost,
+	EmojiSimple,
+	EmojiDetailed,
+	EmojiDetailedAdmin,
+	Flash,
+	Signin,
+	RoleCondFormulaLogics,
+	RoleCondFormulaValueNot,
+	RoleCondFormulaValueIsLocalOrRemote,
+	RoleCondFormulaValueUserSettingBooleanSchema,
+	RoleCondFormulaValueAssignedRole,
+	RoleCondFormulaValueCreated,
+	RoleCondFormulaFollowersOrFollowingOrNotes,
+	RoleCondFormulaValue,
+	RoleLite,
+	Role,
+	RolePolicies,
+	ReversiGameLite,
+	ReversiGameDetailed,
+	MetaLite,
+	MetaDetailedOnly,
+	MetaDetailed,
+	UserWebhook,
+	SystemWebhook,
+	AbuseReportNotificationRecipient,
+	ChatMessage,
+	ChatMessageLite,
+	ChatMessageLiteFor1on1,
+	ChatMessageLiteForRoom,
+	ChatRoom,
+	ChatRoomInvitation,
+	ChatRoomMembership,
+	Note as AutogenNote,
 } from './autogen/models.js';
 
 export type ID = string;
 export type DateString = string;
 
 export type Note = AutogenNote & {
-    isEdited: boolean;
-    editCount: number;
-    latestEditedAt: DateString | null;
+	isEdited: boolean;
+	editCount: number;
+	latestEditedAt: DateString | null;
 };
 
 type NonNullableRecord<T> = {
-    [P in keyof T]-?: NonNullable<T[P]>;
+	[P in keyof T]-?: NonNullable<T[P]>;
 };
 type AllNullRecord<T> = {
-    [P in keyof T]: null;
+	[P in keyof T]: null;
 };
 type AllNullOrOptionalRecord<T> = {
-    [P in keyof T]: never;
+	[P in keyof T]: never;
 };
 
 export type PureRenote =
@@ -113,293 +113,293 @@ export type PureRenote =
     & Pick<Note, 'renote'>; // リノート対象が削除された場合、renoteIdはあるがrenoteはnullになる
 
 export type PageEvent = {
-    pageId: Page['id'];
-    event: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    var: any;
-    userId: User['id'];
-    user: User;
+	pageId: Page['id'];
+	event: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	var: any;
+	userId: User['id'];
+	user: User;
 };
 
 export type ModerationLog = {
-    id: ID;
-    createdAt: DateString;
-    userId: User['id'];
-    user: UserDetailedNotMe;
+	id: ID;
+	createdAt: DateString;
+	userId: User['id'];
+	user: UserDetailedNotMe;
 } & ({
-    type: 'updateServerSettings';
-    info: ModerationLogPayloads['updateServerSettings'];
+	type: 'updateServerSettings';
+	info: ModerationLogPayloads['updateServerSettings'];
 } | {
-    type: 'suspend';
-    info: ModerationLogPayloads['suspend'];
+	type: 'suspend';
+	info: ModerationLogPayloads['suspend'];
 } | {
-    type: 'unsuspend';
-    info: ModerationLogPayloads['unsuspend'];
+	type: 'unsuspend';
+	info: ModerationLogPayloads['unsuspend'];
 } | {
-    type: 'updateUserNote';
-    info: ModerationLogPayloads['updateUserNote'];
+	type: 'updateUserNote';
+	info: ModerationLogPayloads['updateUserNote'];
 } | {
-    type: 'addCustomEmoji';
-    info: ModerationLogPayloads['addCustomEmoji'];
+	type: 'addCustomEmoji';
+	info: ModerationLogPayloads['addCustomEmoji'];
 } | {
-    type: 'updateCustomEmoji';
-    info: ModerationLogPayloads['updateCustomEmoji'];
+	type: 'updateCustomEmoji';
+	info: ModerationLogPayloads['updateCustomEmoji'];
 } | {
-    type: 'deleteCustomEmoji';
-    info: ModerationLogPayloads['deleteCustomEmoji'];
+	type: 'deleteCustomEmoji';
+	info: ModerationLogPayloads['deleteCustomEmoji'];
 } | {
-    type: 'assignRole';
-    info: ModerationLogPayloads['assignRole'];
+	type: 'assignRole';
+	info: ModerationLogPayloads['assignRole'];
 } | {
-    type: 'unassignRole';
-    info: ModerationLogPayloads['unassignRole'];
+	type: 'unassignRole';
+	info: ModerationLogPayloads['unassignRole'];
 } | {
-    type: 'createRole';
-    info: ModerationLogPayloads['createRole'];
+	type: 'createRole';
+	info: ModerationLogPayloads['createRole'];
 } | {
-    type: 'updateRole';
-    info: ModerationLogPayloads['updateRole'];
+	type: 'updateRole';
+	info: ModerationLogPayloads['updateRole'];
 } | {
-    type: 'deleteRole';
-    info: ModerationLogPayloads['deleteRole'];
+	type: 'deleteRole';
+	info: ModerationLogPayloads['deleteRole'];
 } | {
-    type: 'clearQueue';
-    info: ModerationLogPayloads['clearQueue'];
+	type: 'clearQueue';
+	info: ModerationLogPayloads['clearQueue'];
 } | {
-    type: 'promoteQueue';
-    info: ModerationLogPayloads['promoteQueue'];
+	type: 'promoteQueue';
+	info: ModerationLogPayloads['promoteQueue'];
 } | {
-    type: 'deleteDriveFile';
-    info: ModerationLogPayloads['deleteDriveFile'];
+	type: 'deleteDriveFile';
+	info: ModerationLogPayloads['deleteDriveFile'];
 } | {
-    type: 'deleteNote';
-    info: ModerationLogPayloads['deleteNote'];
+	type: 'deleteNote';
+	info: ModerationLogPayloads['deleteNote'];
 } | {
-    type: 'updateNote';
-    info: ModerationLogPayloads['updateNote'];
+	type: 'updateNote';
+	info: ModerationLogPayloads['updateNote'];
 } | {
-    type: 'createGlobalAnnouncement';
-    info: ModerationLogPayloads['createGlobalAnnouncement'];
+	type: 'createGlobalAnnouncement';
+	info: ModerationLogPayloads['createGlobalAnnouncement'];
 } | {
-    type: 'createUserAnnouncement';
-    info: ModerationLogPayloads['createUserAnnouncement'];
+	type: 'createUserAnnouncement';
+	info: ModerationLogPayloads['createUserAnnouncement'];
 } | {
-    type: 'updateGlobalAnnouncement';
-    info: ModerationLogPayloads['updateGlobalAnnouncement'];
+	type: 'updateGlobalAnnouncement';
+	info: ModerationLogPayloads['updateGlobalAnnouncement'];
 } | {
-    type: 'updateUserAnnouncement';
-    info: ModerationLogPayloads['updateUserAnnouncement'];
+	type: 'updateUserAnnouncement';
+	info: ModerationLogPayloads['updateUserAnnouncement'];
 } | {
-    type: 'deleteGlobalAnnouncement';
-    info: ModerationLogPayloads['deleteGlobalAnnouncement'];
+	type: 'deleteGlobalAnnouncement';
+	info: ModerationLogPayloads['deleteGlobalAnnouncement'];
 } | {
-    type: 'deleteUserAnnouncement';
-    info: ModerationLogPayloads['deleteUserAnnouncement'];
+	type: 'deleteUserAnnouncement';
+	info: ModerationLogPayloads['deleteUserAnnouncement'];
 } | {
-    type: 'resetPassword';
-    info: ModerationLogPayloads['resetPassword'];
+	type: 'resetPassword';
+	info: ModerationLogPayloads['resetPassword'];
 } | {
-    type: 'suspendRemoteInstance';
-    info: ModerationLogPayloads['suspendRemoteInstance'];
+	type: 'suspendRemoteInstance';
+	info: ModerationLogPayloads['suspendRemoteInstance'];
 } | {
-    type: 'unsuspendRemoteInstance';
-    info: ModerationLogPayloads['unsuspendRemoteInstance'];
+	type: 'unsuspendRemoteInstance';
+	info: ModerationLogPayloads['unsuspendRemoteInstance'];
 } | {
-    type: 'updateRemoteInstanceNote';
-    info: ModerationLogPayloads['updateRemoteInstanceNote'];
+	type: 'updateRemoteInstanceNote';
+	info: ModerationLogPayloads['updateRemoteInstanceNote'];
 } | {
-    type: 'markSensitiveDriveFile';
-    info: ModerationLogPayloads['markSensitiveDriveFile'];
+	type: 'markSensitiveDriveFile';
+	info: ModerationLogPayloads['markSensitiveDriveFile'];
 } | {
-    type: 'unmarkSensitiveDriveFile';
-    info: ModerationLogPayloads['unmarkSensitiveDriveFile'];
+	type: 'unmarkSensitiveDriveFile';
+	info: ModerationLogPayloads['unmarkSensitiveDriveFile'];
 } | {
-    type: 'createInvitation';
-    info: ModerationLogPayloads['createInvitation'];
+	type: 'createInvitation';
+	info: ModerationLogPayloads['createInvitation'];
 } | {
-    type: 'createAd';
-    info: ModerationLogPayloads['createAd'];
+	type: 'createAd';
+	info: ModerationLogPayloads['createAd'];
 } | {
-    type: 'updateAd';
-    info: ModerationLogPayloads['updateAd'];
+	type: 'updateAd';
+	info: ModerationLogPayloads['updateAd'];
 } | {
-    type: 'deleteAd';
-    info: ModerationLogPayloads['deleteAd'];
+	type: 'deleteAd';
+	info: ModerationLogPayloads['deleteAd'];
 } | {
-    type: 'createAvatarDecoration';
-    info: ModerationLogPayloads['createAvatarDecoration'];
+	type: 'createAvatarDecoration';
+	info: ModerationLogPayloads['createAvatarDecoration'];
 } | {
-    type: 'updateAvatarDecoration';
-    info: ModerationLogPayloads['updateAvatarDecoration'];
+	type: 'updateAvatarDecoration';
+	info: ModerationLogPayloads['updateAvatarDecoration'];
 } | {
-    type: 'deleteAvatarDecoration';
-    info: ModerationLogPayloads['deleteAvatarDecoration'];
+	type: 'deleteAvatarDecoration';
+	info: ModerationLogPayloads['deleteAvatarDecoration'];
 } | {
-    type: 'resolveAbuseReport';
-    info: ModerationLogPayloads['resolveAbuseReport'];
+	type: 'resolveAbuseReport';
+	info: ModerationLogPayloads['resolveAbuseReport'];
 } | {
-    type: 'forwardAbuseReport';
-    info: ModerationLogPayloads['forwardAbuseReport'];
+	type: 'forwardAbuseReport';
+	info: ModerationLogPayloads['forwardAbuseReport'];
 } | {
-    type: 'updateAbuseReportNote';
-    info: ModerationLogPayloads['updateAbuseReportNote'];
+	type: 'updateAbuseReportNote';
+	info: ModerationLogPayloads['updateAbuseReportNote'];
 } | {
-    type: 'unsetUserAvatar';
-    info: ModerationLogPayloads['unsetUserAvatar'];
+	type: 'unsetUserAvatar';
+	info: ModerationLogPayloads['unsetUserAvatar'];
 } | {
-    type: 'unsetUserBanner';
-    info: ModerationLogPayloads['unsetUserBanner'];
+	type: 'unsetUserBanner';
+	info: ModerationLogPayloads['unsetUserBanner'];
 } | {
-    type: 'createSystemWebhook';
-    info: ModerationLogPayloads['createSystemWebhook'];
+	type: 'createSystemWebhook';
+	info: ModerationLogPayloads['createSystemWebhook'];
 } | {
-    type: 'updateSystemWebhook';
-    info: ModerationLogPayloads['updateSystemWebhook'];
+	type: 'updateSystemWebhook';
+	info: ModerationLogPayloads['updateSystemWebhook'];
 } | {
-    type: 'deleteSystemWebhook';
-    info: ModerationLogPayloads['deleteSystemWebhook'];
+	type: 'deleteSystemWebhook';
+	info: ModerationLogPayloads['deleteSystemWebhook'];
 } | {
-    type: 'createAbuseReportNotificationRecipient';
-    info: ModerationLogPayloads['createAbuseReportNotificationRecipient'];
+	type: 'createAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['createAbuseReportNotificationRecipient'];
 } | {
-    type: 'updateAbuseReportNotificationRecipient';
-    info: ModerationLogPayloads['updateAbuseReportNotificationRecipient'];
+	type: 'updateAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['updateAbuseReportNotificationRecipient'];
 } | {
-    type: 'deleteAbuseReportNotificationRecipient';
-    info: ModerationLogPayloads['deleteAbuseReportNotificationRecipient'];
+	type: 'deleteAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['deleteAbuseReportNotificationRecipient'];
 } | {
-    type: 'deleteAccount';
-    info: ModerationLogPayloads['deleteAccount'];
+	type: 'deleteAccount';
+	info: ModerationLogPayloads['deleteAccount'];
 } | {
-    type: 'deletePage';
-    info: ModerationLogPayloads['deletePage'];
+	type: 'deletePage';
+	info: ModerationLogPayloads['deletePage'];
 } | {
-    type: 'deleteFlash';
-    info: ModerationLogPayloads['deleteFlash'];
+	type: 'deleteFlash';
+	info: ModerationLogPayloads['deleteFlash'];
 } | {
-    type: 'deleteGalleryPost';
-    info: ModerationLogPayloads['deleteGalleryPost'];
+	type: 'deleteGalleryPost';
+	info: ModerationLogPayloads['deleteGalleryPost'];
 } | {
-    type: 'deleteChatRoom';
-    info: ModerationLogPayloads['deleteChatRoom'];
+	type: 'deleteChatRoom';
+	info: ModerationLogPayloads['deleteChatRoom'];
 } | {
-    type: 'updateProxyAccountDescription';
-    info: ModerationLogPayloads['updateProxyAccountDescription'];
+	type: 'updateProxyAccountDescription';
+	info: ModerationLogPayloads['updateProxyAccountDescription'];
 });
 
 export type ServerStats = {
-    cpu: number;
-    mem: {
-        used: number;
-        active: number;
-    };
-    net: {
-        rx: number;
-        tx: number;
-    };
-    fs: {
-        r: number;
-        w: number;
-    }
+	cpu: number;
+	mem: {
+		used: number;
+		active: number;
+	};
+	net: {
+		rx: number;
+		tx: number;
+	};
+	fs: {
+		r: number;
+		w: number;
+	}
 };
 
 export type ServerStatsLog = ServerStats[];
 
 export type QueueStats = {
-    deliver: {
-        activeSincePrevTick: number;
-        active: number;
-        waiting: number;
-        delayed: number;
-    };
-    inbox: {
-        activeSincePrevTick: number;
-        active: number;
-        waiting: number;
-        delayed: number;
-    };
+	deliver: {
+		activeSincePrevTick: number;
+		active: number;
+		waiting: number;
+		delayed: number;
+	};
+	inbox: {
+		activeSincePrevTick: number;
+		active: number;
+		waiting: number;
+		delayed: number;
+	};
 };
 
 export type QueueStatsLog = QueueStats[];
 
 export type EmojiAdded = {
-    emoji: EmojiDetailed
+	emoji: EmojiDetailed
 };
 
 export type EmojiUpdated = {
-    emojis: EmojiDetailed[]
+	emojis: EmojiDetailed[]
 };
 
 export type EmojiDeleted = {
-    emojis: EmojiDetailed[]
+	emojis: EmojiDetailed[]
 };
 
 export type AnnouncementCreated = {
-    announcement: Announcement;
+	announcement: Announcement;
 };
 
 export type SignupRequest = {
-    username: string;
-    password: string;
-    host?: string;
-    invitationCode?: string;
-    emailAddress?: string;
-    'hcaptcha-response'?: string | null;
-    'g-recaptcha-response'?: string | null;
-    'turnstile-response'?: string | null;
-    'm-captcha-response'?: string | null;
-    'testcaptcha-response'?: string | null;
+	username: string;
+	password: string;
+	host?: string;
+	invitationCode?: string;
+	emailAddress?: string;
+	'hcaptcha-response'?: string | null;
+	'g-recaptcha-response'?: string | null;
+	'turnstile-response'?: string | null;
+	'm-captcha-response'?: string | null;
+	'testcaptcha-response'?: string | null;
 };
 
 export type SignupResponse = MeDetailed & {
-    token: string;
+	token: string;
 };
 
 export type SignupPendingRequest = {
-    code: string;
+	code: string;
 };
 
 export type SignupPendingResponse = {
-    id: User['id'],
-    i: string,
+	id: User['id'],
+	i: string,
 };
 
 export type SigninFlowRequest = {
-    username: string;
-    password?: string;
-    token?: string;
-    credential?: AuthenticationResponseJSON;
-    'hcaptcha-response'?: string | null;
-    'g-recaptcha-response'?: string | null;
-    'turnstile-response'?: string | null;
-    'm-captcha-response'?: string | null;
+	username: string;
+	password?: string;
+	token?: string;
+	credential?: AuthenticationResponseJSON;
+	'hcaptcha-response'?: string | null;
+	'g-recaptcha-response'?: string | null;
+	'turnstile-response'?: string | null;
+	'm-captcha-response'?: string | null;
 };
 
 export type SigninFlowResponse = {
-    finished: true;
-    id: User['id'];
-    i: string;
+	finished: true;
+	id: User['id'];
+	i: string;
 } | {
-    finished: false;
-    next: 'captcha' | 'password' | 'totp';
+	finished: false;
+	next: 'captcha' | 'password' | 'totp';
 } | {
-    finished: false;
-    next: 'passkey';
-    authRequest: PublicKeyCredentialRequestOptionsJSON;
+	finished: false;
+	next: 'passkey';
+	authRequest: PublicKeyCredentialRequestOptionsJSON;
 };
 
 export type SigninWithPasskeyRequest = {
-    credential?: AuthenticationResponseJSON;
-    context?: string;
+	credential?: AuthenticationResponseJSON;
+	context?: string;
 };
 
 export type SigninWithPasskeyInitResponse = {
-    option: PublicKeyCredentialRequestOptionsJSON;
-    context: string;
+	option: PublicKeyCredentialRequestOptionsJSON;
+	context: string;
 };
 
 export type SigninWithPasskeyResponse = {
-    signinResponse: SigninFlowResponse & { finished: true };
+	signinResponse: SigninFlowResponse & { finished: true };
 };
 
 type Values<T extends Record<PropertyKey, unknown>> = T[keyof T];
