@@ -37,6 +37,7 @@ import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { AccountMoveService } from '@/core/AccountMoveService.js';
+import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { getApId, getApType, getOneApHrefNullable, isActor, isCollection, isCollectionOrOrderedCollection, isPropertyValue } from '../type.js';
 import { extractApHashtags } from './tag.js';
@@ -104,6 +105,7 @@ export class ApPersonService implements OnModuleInit {
 		private followingsRepository: FollowingsRepository,
 
 		private roleService: RoleService,
+		private avatarDecorationService: AvatarDecorationService,
 	) {
 	}
 
@@ -459,6 +461,8 @@ export class ApPersonService implements OnModuleInit {
 		// ハッシュタグ更新
 		this.hashtagService.updateUsertags(user, tags);
 
+		await this.avatarDecorationService.remoteUserUpdate(user);
+
 		//#region アバターとヘッダー画像をフェッチ
 		try {
 			const updates = await this.resolveAvatarAndBanner(user, person.icon, person.image);
@@ -587,81 +591,87 @@ export class ApPersonService implements OnModuleInit {
 				exist.movedToUri !== updates.movedToUri
 			) return true;
 
-			// 移行先がある→ない、ない→ないは無視
-			return false;
-		})();
+		// 移行先がある→ない、ない→ないは無視
+		return false;
+	})();
 
-		if (moving) updates.movedAt = new Date();
+	if (moving) updates.movedAt = new Date();
 
-		// Update user
-		if (!(await this.usersRepository.update({ id: exist.id, isDeleted: false }, updates)).affected) {
-			return 'skip';
-		}
-
-		if (person.publicKey) {
-			await this.userPublickeysRepository.update({ userId: exist.id }, {
-				keyId: person.publicKey.id,
-				keyPem: person.publicKey.publicKeyPem,
-			});
-		}
-
-		let _description: string | null = null;
-
-		if (person._misskey_summary) {
-			_description = truncate(person._misskey_summary, summaryLength);
-		} else if (person.summary) {
-			_description = this.apMfmService.htmlToMfm(truncate(person.summary, summaryLength), person.tag);
-		}
-
-		await this.userProfilesRepository.update({ userId: exist.id }, {
-			url,
-			fields,
-			description: _description,
-			followedMessage: person._misskey_followedMessage != null ? truncate(person._misskey_followedMessage, 256) : null,
-			followingVisibility,
-			followersVisibility,
-			birthday: bday?.[0] ?? null,
-			location: person['vcard:Address'] ?? null,
-		});
-
-		this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: exist.id });
-
-		// ハッシュタグ更新
-		this.hashtagService.updateUsertags(exist, tags);
-
-		// 該当ユーザーが既にフォロワーになっていた場合はFollowingもアップデートする
-		await this.followingsRepository.update(
-			{ followerId: exist.id },
-			{ followerSharedInbox: person.sharedInbox ?? person.endpoints?.sharedInbox ?? null },
-		);
-
-		await this.updateFeatured(exist.id, resolver).catch(err => this.logger.error(err));
-
-		const updated = { ...exist, ...updates };
-
-		this.cacheService.uriPersonCache.set(uri, updated);
-
-		// 移行処理を行う
-		if (updated.movedAt && (
-			// 初めて移行する場合はmovedAtがnullなので移行処理を許可
-			exist.movedAt == null ||
-			// 以前のmovingから14日以上経過した場合のみ移行処理を許可
-			// （Mastodonのクールダウン期間は30日だが若干緩めに設定しておく）
-			exist.movedAt.getTime() + 1000 * 60 * 60 * 24 * 14 < updated.movedAt.getTime()
-		)) {
-			this.logger.info(`Start to process Move of @${updated.username}@${updated.host} (${uri})`);
-			return this.processRemoteMove(updated, movePreventUris)
-				.then(result => {
-					this.logger.info(`Processing Move Finished [${result}] @${updated.username}@${updated.host} (${uri})`);
-					return result;
-				})
-				.catch(e => {
-					this.logger.info(`Processing Move Failed @${updated.username}@${updated.host} (${uri})`, { stack: e });
-				});
-		}
-
+	// Update user
+	if (!(await this.usersRepository.update({ id: exist.id, isDeleted: false }, updates)).affected) {
 		return 'skip';
 	}
+
+	const user = await this.usersRepository.findOneBy({ id: exist.id, isDeleted: false });
+	if (!user) {
+		return 'skip';
+	}
+	await this.avatarDecorationService.remoteUserUpdate(user);
+
+	if (person.publicKey) {
+		await this.userPublickeysRepository.update({ userId: exist.id }, {
+			keyId: person.publicKey.id,
+			keyPem: person.publicKey.publicKeyPem,
+		});
+	}
+
+	let _description: string | null = null;
+
+	if (person._misskey_summary) {
+		_description = truncate(person._misskey_summary, summaryLength);
+	} else if (person.summary) {
+		_description = this.apMfmService.htmlToMfm(truncate(person.summary, summaryLength), person.tag);
+	}
+
+	await this.userProfilesRepository.update({ userId: exist.id }, {
+		url,
+		fields,
+		description: _description,
+		followedMessage: person._misskey_followedMessage != null ? truncate(person._misskey_followedMessage, 256) : null,
+		followingVisibility,
+		followersVisibility,
+		birthday: bday?.[0] ?? null,
+		location: person['vcard:Address'] ?? null,
+	});
+
+	this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: exist.id });
+
+	// ハッシュタグ更新
+	this.hashtagService.updateUsertags(exist, tags);
+
+	// 該当ユーザーが既にフォロワーになっていた場合はFollowingもアップデートする
+	await this.followingsRepository.update(
+		{ followerId: exist.id },
+		{ followerSharedInbox: person.sharedInbox ?? person.endpoints?.sharedInbox ?? null },
+	);
+
+	await this.updateFeatured(exist.id, resolver).catch(err => this.logger.error(err));
+
+	const updated = { ...exist, ...updates };
+
+	this.cacheService.uriPersonCache.set(uri, updated);
+
+	// 移行処理を行う
+	if (updated.movedAt && (
+		// 初めて移行する場合はmovedAtがnullなので移行処理を許可
+		exist.movedAt == null ||
+		// 以前のmovingから14日以上経過した場合のみ移行処理を許可
+		// （Mastodonのクールダウン期間は30日だが若干緩めに設定しておく）
+		exist.movedAt.getTime() + 1000 * 60 * 60 * 24 * 14 < updated.movedAt.getTime()
+	)) {
+		this.logger.info(`Start to process Move of @${updated.username}@${updated.host} (${uri})`);
+		return this.processRemoteMove(updated, movePreventUris)
+			.then(result => {
+				this.logger.info(`Processing Move Finished [${result}] @${updated.username}@${updated.host} (${uri})`);
+				return result;
+			})
+			.catch(e => {
+				this.logger.info(`Processing Move Failed @${updated.username}@${updated.host} (${uri})`, { stack: e });
+			});
+	}
+
+	return 'skip';
+}
 
 	/**
 	 * Personを解決します。

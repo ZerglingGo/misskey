@@ -26,7 +26,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<template v-if="showDecoration">
 		<img
-			v-for="decoration in decorations ?? user.avatarDecorations"
+			v-for="decoration in decorations ?? (user.avatarDecorations || [])"
 			:class="[$style.decoration, { [$style.decorationBlink]: decoration.blink }]"
 			:src="getDecorationUrl(decoration)"
 			:style="{
@@ -78,7 +78,13 @@ const emit = defineEmits<{
 	(ev: 'click', v: MouseEvent): void;
 }>();
 
-const showDecoration = (props.forceShowDecoration || prefer.s.showAvatarDecorations) && !prefer.s.mutedAvatarDecorationUsers.includes(props.user.id);
+const showDecoration = computed(() => {
+	if (!props.forceShowDecoration && !prefer.s.showAvatarDecorations) return false;
+	if (prefer.s.mutedAvatarDecorationUsers.includes(props.user.id)) return false;
+	// 리모트 사용자인 경우 showRemoteAvatarDecorations 설정 확인
+	if (props.user.host !== null && !prefer.s.showRemoteAvatarDecorations) return false;
+	return true;
+});
 
 const bound = computed(() => props.link
 	? { to: userPage(props.user), target: props.target }

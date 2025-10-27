@@ -69,15 +69,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 								</MkPreferenceContainer>
 							</SearchMarker>
 
-							<SearchMarker :keywords="['avatar', 'icon', 'decoration', 'show']">
-								<MkPreferenceContainer k="showAvatarDecorations">
-									<MkSwitch v-model="showAvatarDecorations">
-										<template #label><SearchLabel>{{ i18n.ts.showAvatarDecorations }}</SearchLabel></template>
-									</MkSwitch>
-								</MkPreferenceContainer>
-							</SearchMarker>
+						<SearchMarker :keywords="['avatar', 'icon', 'decoration', 'show']">
+							<MkPreferenceContainer k="showAvatarDecorations">
+								<MkSwitch v-model="showAvatarDecorations">
+									<template #label><SearchLabel>{{ i18n.ts.showAvatarDecorations }}</SearchLabel></template>
+								</MkSwitch>
+							</MkPreferenceContainer>
+						</SearchMarker>
 
-							<SearchMarker :keywords="['follow', 'confirm', 'always']">
+						<SearchMarker :keywords="['remote', 'avatar', 'icon', 'decoration', 'show']">
+							<MkPreferenceContainer k="showRemoteAvatarDecorations">
+								<MkSwitch v-model="showRemoteAvatarDecorations">
+									<template #label><SearchLabel>{{ i18n.ts.showRemoteAvatarDecorations }}</SearchLabel></template>
+								</MkSwitch>
+							</MkPreferenceContainer>
+						</SearchMarker>
+
+						<SearchMarker :keywords="['follow', 'confirm', 'always']">
 								<MkPreferenceContainer k="alwaysConfirmFollow">
 									<MkSwitch v-model="alwaysConfirmFollow">
 										<template #label><SearchLabel>{{ i18n.ts.alwaysConfirmFollow }}</SearchLabel></template>
@@ -892,6 +900,7 @@ const squareAvatars = prefer.model('squareAvatars');
 const enableSeasonalScreenEffect = prefer.model('enableSeasonalScreenEffect');
 const disableCatSpeech = prefer.model('disableCatSpeech');
 const showAvatarDecorations = prefer.model('showAvatarDecorations');
+const showRemoteAvatarDecorations = prefer.model('showRemoteAvatarDecorations');
 const nsfw = prefer.model('nsfw');
 const emojiStyle = prefer.model('emojiStyle');
 const useBlurEffectForModal = prefer.model('useBlurEffectForModal');

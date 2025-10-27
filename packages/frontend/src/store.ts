@@ -322,6 +322,10 @@ export const store = markRaw(new Pizzax('base', {
 		where: 'device',
 		default: true,
 	},
+	showRemoteAvatarDecorations: {
+		where: 'device',
+		default: false,
+	},
 	numberOfPageCache: {
 		where: 'device',
 		default: 3,
