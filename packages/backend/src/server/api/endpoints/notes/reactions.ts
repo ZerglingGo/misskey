@@ -11,6 +11,7 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { QueryService } from '@/core/QueryService.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['notes', 'reactions'],
@@ -61,6 +62,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private noteReactionEntityService: NoteReactionEntityService,
 		private queryService: QueryService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const query = this.queryService.makePaginationQuery(this.noteReactionsRepository.createQueryBuilder('reaction'), ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate)
@@ -74,6 +76,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				const suffix = '@.:';
 				const type = ps.type.endsWith(suffix) ? ps.type.slice(0, ps.type.length - suffix.length) + ':' : ps.type;
 				query.andWhere('reaction.reaction = :type', { type });
+			}
+
+			if (me && (await this.cacheService.userProfileCache.fetch(me.id)).hideMutedUsers !== false) {
+				this.queryService.generateMutedUserQueryForUsers(query, me);
 			}
 
 			const reactions = await query.limit(ps.limit).getMany();

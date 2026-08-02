@@ -323,13 +323,11 @@ export class NotificationEntityService implements OnModuleInit {
 		notifications: T[],
 		meId: MiUser['id'],
 	): Promise<T[]> {
-		const [
-			userIdsWhoMeMuting,
-			userMutedInstances,
-		] = await Promise.all([
-			this.cacheService.userMutingsCache.fetch(meId),
-			this.cacheService.userProfileCache.fetch(meId).then(p => new Set(p.mutedInstances)),
-		]);
+		const profile = await this.cacheService.userProfileCache.fetch(meId);
+		const userIdsWhoMeMuting = profile.hideMutedUsers !== false
+			? await this.cacheService.userMutingsCache.fetch(meId)
+			: new Set<MiUser['id']>();
+		const userMutedInstances = new Set(profile.mutedInstances);
 
 		const notifierIds = notifications.map(notification => 'notifierId' in notification ? notification.notifierId : null).filter(x => x != null);
 		const notifiers = notifierIds.length > 0 ? await this.usersRepository.find({

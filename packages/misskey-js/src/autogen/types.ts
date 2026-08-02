@@ -4179,6 +4179,7 @@ export type components = {
             mutedWords: string[][];
             hardMutedWords: string[][];
             mutedInstances: string[];
+            hideMutedUsers: boolean;
             notificationRecieveConfig: {
                 note?: {
                     /** @enum {string} */
@@ -27799,6 +27800,7 @@ export interface operations {
                     mutedWords?: (string[] | string)[];
                     hardMutedWords?: (string[] | string)[];
                     mutedInstances?: string[];
+                    hideMutedUsers?: boolean;
                     notificationRecieveConfig?: {
                         note?: {
                             /** @enum {string} */

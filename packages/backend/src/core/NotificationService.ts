@@ -107,9 +107,11 @@ export class NotificationService implements OnApplicationShutdown {
 				return null;
 			}
 
-			const mutings = await this.cacheService.userMutingsCache.fetch(notifieeId);
-			if (mutings.has(notifierId)) {
-				return null;
+			if (profile.hideMutedUsers !== false) {
+				const mutings = await this.cacheService.userMutingsCache.fetch(notifieeId);
+				if (mutings.has(notifierId)) {
+					return null;
+				}
 			}
 
 			if (recieveConfig?.type === 'following') {
@@ -269,6 +271,10 @@ export class NotificationService implements OnApplicationShutdown {
 	): Promise<MiNotification[]> {
 		let sinceTime = sinceId ? this.toXListId(sinceId) : null;
 		let untilTime = untilId ? this.toXListId(untilId) : null;
+		const profile = await this.cacheService.userProfileCache.fetch(userId);
+		const mutedUserIds = profile.hideMutedUsers !== false
+			? await this.cacheService.userMutingsCache.fetch(userId)
+			: null;
 
 		let notifications: MiNotification[];
 		for (; ;) {
@@ -293,7 +299,8 @@ export class NotificationService implements OnApplicationShutdown {
 				return [];
 			}
 
-			notifications = notificationsRes.map(x => JSON.parse(x[1][1])) as MiNotification[];
+			notifications = (notificationsRes.map(x => JSON.parse(x[1][1])) as MiNotification[])
+				.filter(notification => mutedUserIds == null || !('notifierId' in notification) || !mutedUserIds.has(notification.notifierId));
 
 			if (includeTypes && includeTypes.length > 0) {
 				notifications = notifications.filter(notification => includeTypes.includes(notification.type));

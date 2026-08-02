@@ -601,6 +601,10 @@ export const packedMeDetailedOnlySchema = {
 				nullable: false, optional: false,
 			},
 		},
+		hideMutedUsers: {
+			type: 'boolean',
+			nullable: false, optional: false,
+		},
 		notificationRecieveConfig: {
 			type: 'object',
 			nullable: false, optional: false,

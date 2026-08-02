@@ -1033,6 +1033,14 @@ export interface Locale extends ILocale {
      */
     "mutedUsers": string;
     /**
+     * ミュートしたユーザーを通知とリアクション一覧から非表示にする
+     */
+    "hideMutedUsers": string;
+    /**
+     * 有効にすると、ミュートしたユーザーは通知とリアクション一覧に表示されなくなります。
+     */
+    "hideMutedUsersDescription": string;
+    /**
      * ミュートしたユーザーを匿名化
      */
     "deidentifyMutedUsers": string;

@@ -113,6 +113,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<div class="_gaps_s">
 						<MkSwitch v-model="deidentifyMutedUsers">{{ i18n.ts.deidentifyMutedUsers }}</MkSwitch>
 
+						<SearchMarker
+							:keywords="['mute', 'notification', 'reaction', 'hide', 'user']"
+						>
+							<MkSwitch :modelValue="$i.hideMutedUsers" @update:modelValue="updateHideMutedUsers">
+								<template #label><SearchLabel>{{ i18n.ts.hideMutedUsers }}</SearchLabel></template>
+								<template #caption><SearchText>{{ i18n.ts.hideMutedUsersDescription }}</SearchText></template>
+							</MkSwitch>
+						</SearchMarker>
+
 						<MkPagination :paginator="mutingPaginator" withControl>
 							<template #empty><MkResult type="empty" :text="i18n.ts.noUsers"/></template>
 
@@ -293,6 +302,12 @@ async function saveMutedWords(mutedWords: (string | string[])[]) {
 
 async function saveHardMutedWords(hardMutedWords: (string | string[])[]) {
 	await os.apiWithDialog('i/update', { hardMutedWords });
+}
+
+async function updateHideMutedUsers(value: boolean) {
+	await os.apiWithDialog('i/update', { hideMutedUsers: value }).then(i => {
+		$i.hideMutedUsers = i.hideMutedUsers;
+	});
 }
 
 const headerActions = computed(() => []);

@@ -142,6 +142,7 @@ describe('ユーザー', () => {
 			mutedWords: user.mutedWords,
 			hardMutedWords: user.hardMutedWords,
 			mutedInstances: user.mutedInstances,
+			hideMutedUsers: user.hideMutedUsers,
 			// @ts-expect-error 後方互換性
 			mutingNotificationTypes: user.mutingNotificationTypes,
 			notificationRecieveConfig: user.notificationRecieveConfig,
@@ -381,6 +382,7 @@ describe('ユーザー', () => {
 		assert.deepStrictEqual(response.unreadAnnouncements, []);
 		assert.deepStrictEqual(response.mutedWords, []);
 		assert.deepStrictEqual(response.mutedInstances, []);
+		assert.strictEqual(response.hideMutedUsers, true);
 		// @ts-expect-error 後方互換のため
 		assert.deepStrictEqual(response.mutingNotificationTypes, []);
 		assert.deepStrictEqual(response.notificationRecieveConfig, {});
@@ -472,6 +474,8 @@ describe('ユーザー', () => {
 		{ parameters: () => ({ mutedWords: [] }) },
 		{ parameters: () => ({ mutedInstances: ['xxxx.xxxxx'] }) },
 		{ parameters: () => ({ mutedInstances: [] }) },
+		{ parameters: () => ({ hideMutedUsers: false }) },
+		{ parameters: () => ({ hideMutedUsers: true }) },
 		{ parameters: () => ({ notificationRecieveConfig: { mention: { type: 'following' } } }) },
 		{ parameters: () => ({ notificationRecieveConfig: {} }) },
 		{ parameters: () => ({ emailNotificationTypes: ['mention', 'reply', 'quote', 'follow', 'receiveFollowRequest'] }) },
