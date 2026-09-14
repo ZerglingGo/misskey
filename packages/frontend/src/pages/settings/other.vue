@@ -113,9 +113,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #label><SearchLabel>{{ i18n.ts.experimentalFeatures }}</SearchLabel></template>
 
 					<div class="_gaps_m">
-						<MkSwitch v-model="enableCondensedLine">
-							<template #label>Enable condensed line</template>
-						</MkSwitch>
 						<MkSwitch v-model="skipNoteRender">
 							<template #label>Enable note render skipping</template>
 						</MkSwitch>
@@ -169,11 +166,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkButton v-if="storagePersistenceSupported && !storagePersisted" @click="enableStoragePersistence">{{ i18n.ts._settings.settingsPersistence_title }}</MkButton>
 
 		<MkButton @click="forceCloudBackup">{{ i18n.ts._preferencesBackup.forceBackup }}</MkButton>
-
-		<FormSlot>
-			<MkButton danger @click="migrate"><i class="ti ti-refresh"></i> {{ i18n.ts.migrateOldSettings }}</MkButton>
-			<template #caption>{{ i18n.ts.migrateOldSettings_description }}</template>
-		</FormSlot>
 	</div>
 </SearchMarker>
 </template>
@@ -197,7 +189,6 @@ import FormSection from '@/components/form/section.vue';
 import { prefer } from '@/preferences.js';
 import MkRolePreview from '@/components/MkRolePreview.vue';
 import { signout } from '@/signout.js';
-import { migrateOldSettings } from '@/pref-migrate.js';
 import { hideAllTips as _hideAllTips, resetAllTips as _resetAllTips } from '@/tips.js';
 import { suggestReload } from '@/utility/reload-suggest.js';
 import { cloudBackup } from '@/preferences/utility.js';
@@ -207,7 +198,6 @@ const $i = ensureSignin();
 const storagePersisted = await getStoragePersistenceStatusRef();
 
 const reportError = prefer.model('reportError');
-const enableCondensedLine = prefer.model('enableCondensedLine');
 const skipNoteRender = prefer.model('skipNoteRender');
 const devMode = prefer.model('devMode');
 const stackingRouterView = prefer.model('experimental.stackingRouterView');
@@ -246,50 +236,6 @@ async function deleteAccount() {
 	await signout();
 }
 
-async function truncateAccount() {
-	{
-		const { canceled } = await os.confirm({
-			type: 'warning',
-			text: i18n.ts.truncateAccountConfirm,
-		});
-		if (canceled) return;
-	}
-
-	const auth = await os.authenticateDialog();
-	if (auth.canceled) return;
-
-	await os.apiWithDialog('i/truncate-account', {
-		password: auth.result.password,
-		token: auth.result.token,
-	});
-
-	await os.alert({
-		title: i18n.ts._accountTruncate.started,
-	});
-}
-
-async function truncateAccountKeepDrive() {
-	{
-		const { canceled } = await os.confirm({
-			type: 'warning',
-			text: i18n.ts.truncateAccountConfirm,
-		});
-		if (canceled) return;
-	}
-
-	const auth = await os.authenticateDialog();
-	if (auth.canceled) return;
-
-	await os.apiWithDialog('i/truncate-account-keep-drive', {
-		password: auth.result.password,
-		token: auth.result.token,
-	});
-
-	await os.alert({
-		title: i18n.ts._accountTruncate.started,
-	});
-}
-
 async function requestTruncateAccount() {
 	{
 		const { canceled } = await os.confirm({
@@ -321,10 +267,6 @@ async function requestTruncateAccount() {
 	await os.alert({
 		title: i18n.ts._accountTruncate.started,
 	});
-}
-
-function migrate() {
-	migrateOldSettings();
 }
 
 function resetAllTips() {

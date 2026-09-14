@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteUpdateService } from '@/core/NoteUpdateService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
+import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { DI } from '@/di-symbols.js';
 import type { NoteRevisionsRepository } from '@/models/_.js';
@@ -42,6 +43,11 @@ export const meta = {
 					type: 'string',
 					optional: false, nullable: false,
 					format: 'id',
+				},
+				editor: {
+					type: 'object',
+					optional: true, nullable: false,
+					ref: 'UserLite',
 				},
 				payload: {
 					type: 'object',
@@ -85,6 +91,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private getterService: GetterService,
 		private noteUpdateService: NoteUpdateService,
 		private noteEntityService: NoteEntityService,
+		private userEntityService: UserEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const note = await this.getterService.getNote(ps.noteId).catch(err => {
@@ -115,12 +122,17 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const revisions = await query.getMany();
 
+			// bscone: pack editors (deduplicated) so the client can show who made each edit
+			const editorIds = [...new Set(revisions.map(revision => revision.editorId))];
+			const editors = new Map(await Promise.all(editorIds.map(async id => [id, await this.userEntityService.pack(id, me).catch(() => undefined)] as const)));
+
 			// Return revisions with appropriate data (redact if needed)
 			return revisions.map(revision => ({
 				id: revision.id,
 				version: revision.version,
 				createdAt: revision.createdAt.toISOString(),
 				editorId: revision.editorId,
+				editor: editors.get(revision.editorId),
 				payload: revision.payload,
 			}));
 		});

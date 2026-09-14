@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <component :is="link ? MkA : 'span'" v-user-preview="preview ? user.id : undefined" v-bind="bound" class="_noSelect" :class="[$style.root, { [$style.animation]: animation, [$style.cat]: user.isCat, [$style.square]: squareAvatars }]" :style="{ color }" :title="acct(user)" @click.stop="onClick">
-	<MkImgWithBlurhash v-if="prefer.s.enableHighQualityImagePlaceholders" :class="$style.inner" :src="(prefer.s.deidentifyMutedUsers && user.isMuted) ? (instance.iconUrl || '/favicon.ico') : url" :hash="user.avatarBlurhash" :cover="true" :onlyAvgColor="true"/>
-	<img v-else :class="$style.inner" :src="(prefer.s.deidentifyMutedUsers && user.isMuted) ? (instance.iconUrl || '/favicon.ico') : url" alt="" decoding="async" style="pointer-events: none;"/>
-	<MkUserOnlineIndicator v-if="!(prefer.s.deidentifyMutedUsers && user.isMuted) && indicator" :class="$style.indicator" :user="user"/>
-	<div v-if="!(prefer.s.deidentifyMutedUsers && user.isMuted) && user.isCat" :class="[$style.ears]">
+	<MkImgWithBlurhash v-if="prefer.s.enableHighQualityImagePlaceholders" :class="$style.inner" :src="deidentified ? (instance.iconUrl || '/favicon.ico') : url" :hash="user.avatarBlurhash" :cover="true" :onlyAvgColor="true"/>
+	<img v-else :class="$style.inner" :src="deidentified ? (instance.iconUrl || '/favicon.ico') : url" alt="" decoding="async" style="pointer-events: none;"/>
+	<MkUserOnlineIndicator v-if="!deidentified && indicator" :class="$style.indicator" :user="user"/>
+	<div v-if="!deidentified && user.isCat" :class="[$style.ears]">
 		<div :class="$style.earLeft">
 			<div v-if="false" :class="$style.layer">
 				<div :class="$style.plot" :style="{ backgroundImage: `url(${JSON.stringify(url)})` }"></div>
@@ -61,7 +61,7 @@ type Decoration = Misskey.entities.UserDetailed['avatarDecorations'][number];
 type DecorationEditorDecoration = Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'> & { blink?: boolean; };
 
 const props = withDefaults(defineProps<{
-	user: Misskey.entities.UserDetailed;
+	user: Misskey.entities.User;
 	target?: string | null;
 	link?: boolean;
 	preview?: boolean;
@@ -76,6 +76,9 @@ const props = withDefaults(defineProps<{
 	decorations: undefined,
 	forceShowDecoration: false,
 });
+
+// bscone: de-identify muted users (isMuted only exists on UserDetailed)
+const deidentified = computed(() => prefer.s.deidentifyMutedUsers && 'isMuted' in props.user && props.user.isMuted === true);
 
 const emit = defineEmits<{
 	(ev: 'click', v: PointerEvent): void;

@@ -109,12 +109,12 @@ export class FanoutTimelineService {
 	}
 
 	@bindThis
-	public remove(name: FanoutTimelineName, id: string) {
-		return this.redisForTimelines.lrem('list:' + name, 0, id);
+	public purge(name: FanoutTimelineName) {
+		return this.redisForTimelines.del('list:' + name);
 	}
 
 	@bindThis
-	public purge(name: FanoutTimelineName) {
-		return this.redisForTimelines.del('list:' + name);
+	public remove(name: FanoutTimelineName, id: string) {
+		return this.redisForTimelines.lrem('list:' + name, 1, id);
 	}
 }

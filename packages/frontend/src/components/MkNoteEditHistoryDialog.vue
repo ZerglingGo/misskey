@@ -147,11 +147,11 @@ type NoteRevision = {
 	version: number;
 	createdAt: string;
 	editorId: string;
-	editor?: Misskey.entities.UserDetailed;
+	editor?: Misskey.entities.UserLite;
 	payload: {
 		cw?: string | null;
 		text?: string | null;
-		visibility?: string;
+		visibility?: (typeof Misskey.noteVisibilities)[number];
 		fileIds?: string[];
 		poll?: {
 			choices: string[];

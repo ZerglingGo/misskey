@@ -97,14 +97,7 @@ export const paramDef = {
 		},
 	},
 	required: ['noteId'],
-	anyOf: [
-		{ required: ['text'] },
-		{ required: ['cw'] },
-		{ required: ['visibility'] },
-		{ required: ['fileIds'] },
-		{ required: ['poll'] },
-		{ required: ['localOnly'] },
-	],
+	// bscone: the "at least one field is required" constraint is validated in the handler (a top-level anyOf makes the generated request type `unknown`)
 } as const;
 
 @Injectable()

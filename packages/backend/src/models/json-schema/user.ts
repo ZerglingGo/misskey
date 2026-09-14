@@ -708,6 +708,10 @@ export const packedMeDetailedOnlySchema = {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
+		autoDeleteKeepDriveFiles: {
+			type: 'boolean',
+			nullable: false, optional: false,
+		},
 		//#endregion
 	},
 } as const;

@@ -74,6 +74,7 @@ import { store } from '@/store.js';
 import MkNote from '@/components/MkNote.vue';
 import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
+import { DI } from '@/di.js';
 import { globalEvents, useGlobalEvent } from '@/events.js';
 import { isSeparatorNeeded, getSeparatorInfo } from '@/utility/timeline-date-separate.js';
 import { Paginator } from '@/utility/paginator.js';
@@ -101,7 +102,7 @@ const props = withDefaults(defineProps<{
 
 provide('inTimeline', true);
 provide('tl_withSensitive', computed(() => props.withSensitive));
-provide('inChannel', computed(() => props.src === 'channel'));
+provide(DI.inChannel, computed(() => props.src === 'channel' ? props.channel ?? null : null));
 
 let paginator: IPaginator<Misskey.entities.Note>;
 
@@ -267,13 +268,19 @@ if (!store.s.realtimeMode) {
 }
 
 useGlobalEvent('noteUpdated', (note) => {
-	if (note.visibility !== 'public' && (props.src === 'global' || props.src === 'local')) {
+	if (note.id != null && note.visibility !== 'public' && (props.src === 'global' || props.src === 'local')) {
 		paginator.removeItem(note.id);
 	}
 });
 
 useGlobalEvent('noteDeleted', (noteId) => {
 	paginator.removeItem(noteId);
+});
+
+useGlobalEvent('noteRemovedFromAntenna', (antennaId, noteId) => {
+	if (props.src === 'antenna' && props.antenna === antennaId) {
+		paginator.removeItem(noteId);
+	}
 });
 
 function releaseQueue() {
