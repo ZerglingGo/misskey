@@ -91,9 +91,9 @@ const paginator = markRaw(new Paginator('federation/instances', {
 		sort: sort.value,
 		host: host.value !== '' ? host.value : null,
 		...(
-			state.value === 'federating' ? { federating: true, suspended: false, blocked: false, silenced: false } :
-			state.value === 'subscribing' ? { subscribing: true, suspended: false, blocked: false, silenced: false } :
-			state.value === 'publishing' ? { publishing: true, suspended: false, blocked: false, silenced: false } :
+			state.value === 'federating' ? { federating: true, suspended: false, blocked: false } :
+			state.value === 'subscribing' ? { subscribing: true, suspended: false, blocked: false } :
+			state.value === 'publishing' ? { publishing: true, suspended: false, blocked: false } :
 			state.value === 'suspended' ? { suspended: true } :
 			state.value === 'blocked' ? { blocked: true } :
 			state.value === 'silenced' ? { silenced: true } :

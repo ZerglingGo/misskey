@@ -488,10 +488,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 			throw new IdentifiableError('689ee33f-f97c-479a-ac49-1b9f8140af99', 'Note contains prohibited words');
 		}
 
-		if (user.host !== null) {
-			const instance = await this.instancesRepository.findOneBy({ host: this.utilityService.toPuny(user.host) });
+		const inSilencedInstance = this.utilityService.isSilencedHost(this.meta.silencedHosts, user.host);
 
-			if (instance !== null && instance.isSilenced && (data.visibility === 'public') && ((await this.roleService.getUserPolicies(user.id)).ignoreServerSilence !== true)) {
+		if (data.visibility === 'public' && inSilencedInstance && user.host !== null) {
+			// bscone: roles with ignoreServerSilence keep public visibility on silenced servers
+			if ((await this.roleService.getUserPolicies(user.id)).ignoreServerSilence !== true) {
 				data.visibility = 'home';
 			}
 		}

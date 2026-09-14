@@ -135,13 +135,9 @@ const emit = defineEmits<{
 	(ev: 'closed'): void;
 }>();
 
-// ... 기존 코드들 ...
-
 function cancel() {
 	dialogEl.value!.close();
 }
-
-// selectRevision, getChanges 함수들...
 
 type NoteRevision = {
 	version: number;

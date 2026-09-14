@@ -67,17 +67,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 					<div class="_gaps_m">
 						<FormInfo warn>{{ i18n.ts._accountTruncate.mayTakeTime }}</FormInfo>
-						
+
 						<MkSwitch v-model="truncateKeepDrive">
 							<template #label>{{ i18n.ts.autoDeleteKeepDriveFiles }}</template>
 							<template #caption>{{ i18n.ts._accountTruncate.keepDriveDescription }}</template>
 						</MkSwitch>
-						
+
 						<MkSwitch v-model="truncateKeepFavorites">
 							<template #label>{{ i18n.ts.autoDeleteKeepFavorites }}</template>
 							<template #caption>{{ i18n.ts._accountTruncate.keepFavoritesDescription }}</template>
 						</MkSwitch>
-						
+
 						<MkButton v-if="!$i.isDeleted" danger @click="requestTruncateAccount">{{ i18n.ts._accountTruncate.requestAccountTruncate }}</MkButton>
 						<MkButton v-else disabled>{{ i18n.ts._accountTruncate.inProgress }}</MkButton>
 					</div>
@@ -248,7 +248,7 @@ async function requestTruncateAccount() {
 	const auth = await os.authenticateDialog();
 	if (auth.canceled) return;
 
-	// 드라이브 유지 옵션이 켜져 있으면 truncate-account-keep-drive API 호출
+	// bscone: keep drive files when the option is on
 	if (truncateKeepDrive.value) {
 		await os.apiWithDialog('i/truncate-account-keep-drive', {
 			password: auth.result.password,
@@ -256,7 +256,7 @@ async function requestTruncateAccount() {
 			keepFavorites: truncateKeepFavorites.value,
 		});
 	} else {
-		// 드라이브도 삭제하는 일반 truncate (즐겨찾기 보호 옵션 포함)
+		// bscone: delete drive files too (favorites can still be kept)
 		await os.apiWithDialog('i/truncate-account', {
 			password: auth.result.password,
 			token: auth.result.token,

@@ -333,7 +333,6 @@ export function useNoteCapture(props: {
 		poll?: Misskey.entities.Note['poll'];
 		hasPoll?: boolean;
 	}): void {
-		console.log(`Note updated: ${note.id}`, ctx);
 		if (ctx.cw !== undefined) {
 			$note.cw = note.cw = ctx.cw;
 		}

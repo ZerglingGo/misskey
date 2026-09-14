@@ -91,6 +91,7 @@ const paginator = markRaw(new Paginator('federation/instances', {
 			state.value === 'publishing' ? { publishing: true, suspended: false, blocked: false } :
 			state.value === 'suspended' ? { suspended: true } :
 			state.value === 'blocked' ? { blocked: true } :
+			state.value === 'silenced' ? { silenced: true } :
 			state.value === 'notResponding' ? { notResponding: true } :
 			{}),
 	})),
@@ -99,6 +100,7 @@ const paginator = markRaw(new Paginator('federation/instances', {
 function getStatus(instance: Misskey.entities.FederationInstance) {
 	if (instance.isSuspended) return 'Suspended';
 	if (instance.isBlocked) return 'Blocked';
+	if (instance.isSilenced) return 'Silenced';
 	if (instance.isNotResponding) return 'Error';
 	return 'Alive';
 }

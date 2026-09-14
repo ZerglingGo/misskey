@@ -26,4 +26,6 @@ export interface PostFormProps {
 	initialVisibleUsers?: Misskey.entities.UserDetailed[];
 	initialNote?: Misskey.entities.Note;
 	instant?: boolean;
+	// bscone: edit an existing note (notes/update) instead of creating a new one
+	updateMode?: boolean;
 };

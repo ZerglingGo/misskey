@@ -62,7 +62,7 @@ export type DbJobMap = {
 	importCustomEmojis: DbUserImportJobData;
 	deleteAccount: DbUserDeleteJobData;
 	truncateAccount: DbUserTruncateJobData;
-  truncateAccountKeepDrive: DbUserTruncateJobData;
+	truncateAccountKeepDrive: DbUserTruncateJobData;
 };
 
 export type DbJobDataWithUser = {

@@ -24,7 +24,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<img
 		v-for="decoration in user.avatarDecorations"
-		v-if="!($attrs.mutedAvatarDecorationUsers as string[] | undefined)?.includes(user.id)"
 		:class="[$style.decoration]"
 		:src="getDecorationUrl(decoration)"
 		:style="{

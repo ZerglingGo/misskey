@@ -84,7 +84,8 @@ const emit = defineEmits<{
 	(ev: 'click', v: PointerEvent): void;
 }>();
 
-const showDecoration = (props.forceShowDecoration || prefer.s.showAvatarDecorations) && !prefer.s.mutedAvatarDecorationUsers.includes(props.user.id);
+// bscone: react to avatar decoration mute toggles without a reload
+const showDecoration = computed(() => (props.forceShowDecoration || prefer.r.showAvatarDecorations.value) && !prefer.r.mutedAvatarDecorationUsers.value.includes(props.user.id));
 
 const bound = computed(() => props.link
 	? { to: userPage(props.user), target: props.target }

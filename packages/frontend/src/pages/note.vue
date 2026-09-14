@@ -121,7 +121,7 @@ const nextChannelPaginator = markRaw(new Paginator('channels/timeline', {
 }));
 
 function goBack(): void {
-	history.back();
+	window.history.back();
 }
 
 function fetchNote() {

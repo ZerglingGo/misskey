@@ -85,7 +85,7 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 	pattern: '0 4 * * *',
 }, {
 	name: 'autoDeleteNotes',
-	// 매일 오전 3시에 실행
+	// bscone: runs daily at 03:00
 	pattern: '0 3 * * *',
 }];
 
@@ -119,10 +119,6 @@ export class QueueService {
 		@Inject('queue:userWebhookDeliver') public userWebhookDeliverQueue: UserWebhookDeliverQueue,
 		@Inject('queue:systemWebhookDeliver') public systemWebhookDeliverQueue: SystemWebhookDeliverQueue,
 	) {
-
-	}
-
-	async onModuleInit() {
 		for (const def of REPEATABLE_SYSTEM_JOB_DEF) {
 			this.systemQueue.upsertJobScheduler(def.name, {
 				pattern: def.pattern,

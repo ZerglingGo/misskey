@@ -115,19 +115,28 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 			}
 
-			if (typeof ps.silenced === 'boolean') {
-				if (ps.silenced) {
-					query.andWhere('instance.isSilenced = TRUE');
-				} else {
-					query.andWhere('instance.isSilenced = FALSE');
-				}
-			}
-
 			if (typeof ps.suspended === 'boolean') {
 				if (ps.suspended) {
 					query.andWhere('instance.suspensionState != \'none\'');
 				} else {
 					query.andWhere('instance.suspensionState = \'none\'');
+				}
+			}
+
+			if (typeof ps.silenced === 'boolean') {
+				const meta = await this.metaService.fetch(true);
+
+				if (ps.silenced) {
+					if (meta.silencedHosts.length === 0) {
+						return [];
+					}
+					query.andWhere('instance.host IN (:...silences)', {
+						silences: meta.silencedHosts,
+					});
+				} else if (meta.silencedHosts.length > 0) {
+					query.andWhere('instance.host NOT IN (:...silences)', {
+						silences: meta.silencedHosts,
+					});
 				}
 			}
 

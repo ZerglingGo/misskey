@@ -379,7 +379,7 @@ definePage(() => ({
 				}
 
 				&.sensitive {
-					background: var(--infoWarnBg);
+					background: var(--MI_THEME-infoWarnBg);
 				}
 
 				> .img {
@@ -430,7 +430,7 @@ definePage(() => ({
 				}
 
 				&.sensitive {
-					background: var(--infoWarnBg);
+					background: var(--MI_THEME-infoWarnBg);
 				}
 
 				> .img {

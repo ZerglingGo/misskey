@@ -9029,7 +9029,6 @@ export interface operations {
             content: {
                 'application/json': {
                     host: string;
-                    isSilenced?: boolean;
                     isSuspended?: boolean;
                     moderationNote?: string;
                 };
@@ -9524,6 +9523,7 @@ export interface operations {
                         enableEmail: boolean;
                         enableServiceWorker: boolean;
                         translatorAvailable: boolean;
+                        silencedHosts?: string[];
                         mediaSilencedHosts: string[];
                         pinnedUsers: string[];
                         hiddenTags: string[];
@@ -13134,6 +13134,7 @@ export interface operations {
                     perUserListTimelineCacheMax?: number;
                     enableReactionsBuffering?: boolean;
                     notesPerOneAd?: number;
+                    silencedHosts?: string[] | null;
                     mediaSilencedHosts?: string[] | null;
                     /** @description [Deprecated] Use "urlPreviewSummaryProxyUrl" instead. */
                     summalyProxy?: string | null;

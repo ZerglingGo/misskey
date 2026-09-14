@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { Ref } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
@@ -158,9 +158,12 @@ export function useNote(
 	const isMyRenote = $i != null && ($i.id === rawNote.userId);
 	// bscone: text / cw / visibility can change through note editing, so read them from $appearNote
 	const parsed = computed(() => $appearNote.text ? mfm.parse($appearNote.text) : null);
-	const urls = parsed.value ? extractUrlFromMfm(parsed.value).filter((url) => appearNote.renote?.url !== url && appearNote.renote?.uri !== url) : null;
-	const isLong = shouldCollapsed(appearNote, urls ?? []);
-	const collapsed = ref($appearNote.cw == null && isLong);
+	const urls = computed(() => parsed.value ? extractUrlFromMfm(parsed.value).filter((url) => appearNote.renote?.url !== url && appearNote.renote?.uri !== url) : null);
+	const isLong = computed(() => shouldCollapsed({ ...appearNote, text: $appearNote.text, cw: $appearNote.cw }, urls.value ?? []));
+	const collapsed = ref($appearNote.cw == null && isLong.value);
+	watch(isLong, (v) => {
+		collapsed.value = $appearNote.cw == null && v;
+	});
 	const canRenote = computed(() => ['public', 'home'].includes($appearNote.visibility) || ($appearNote.visibility === 'followers' && appearNote.userId === $i?.id));
 	const showTicker = (prefer.s.instanceTicker === 'always') || (prefer.s.instanceTicker === 'remote' && appearNote.user.instance);
 	const renoteCollapsed = ref(prefer.s.collapseRenotes && isRenote && (($i && ($i.id === rawNote.userId || $i.id === appearNote.userId)) || ($appearNote.myReaction != null)));

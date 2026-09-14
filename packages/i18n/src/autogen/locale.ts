@@ -1101,10 +1101,6 @@ export interface Locale extends ILocale {
      */
     "suspended": string;
     /**
-     * サイレンス
-     */
-    "silenced": string;
-    /**
      * 全て
      */
     "all": string;
@@ -3517,7 +3513,7 @@ export interface Locale extends ILocale {
      */
     "botProtection": string;
     /**
-     * サーバーブロック
+     * サーバーブロック・サイレンス
      */
     "instanceBlocking": string;
     /**

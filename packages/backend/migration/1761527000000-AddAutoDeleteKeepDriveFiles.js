@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class AddAutoDeleteKeepDriveFiles1761527000000 {
     name = 'AddAutoDeleteKeepDriveFiles1761527000000'
 

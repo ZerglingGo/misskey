@@ -6,7 +6,6 @@
 export function elementContains(parent: Element | null, child: Element | null, checkSame = true) {
 	if (parent === null || child === null) return false;
 	if (checkSame && parent === child) return true;
-	if (!child) return false;
 	let node = child.parentNode;
 	while (node) {
 		if (node === parent) return true;

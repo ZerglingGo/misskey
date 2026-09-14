@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkButton v-if="suspensionState === 'none'" :disabled="!instance" danger @click="stopDelivery">{{ i18n.ts._delivery.stop }}</MkButton>
 					<MkButton v-if="suspensionState !== 'none'" :disabled="!instance || suspensionState == 'softwareSuspended'" @click="resumeDelivery">{{ i18n.ts._delivery.resume }}</MkButton>
 					<MkSwitch v-model="isBlocked" :disabled="!meta || !instance" @update:modelValue="toggleBlock">{{ i18n.ts.blockThisInstance }}</MkSwitch>
-					<MkSwitch v-model="isSilenced" :disabled="!meta || !instance" @update:modelValue="toggleSilence">{{ i18n.ts.silenceThisInstance }}</MkSwitch>
+					<MkSwitch v-model="isSilenced" :disabled="!meta || !instance" @update:modelValue="toggleSilenced">{{ i18n.ts.silenceThisInstance }}</MkSwitch>
 					<MkSwitch v-model="isMediaSilenced" :disabled="!meta || !instance" @update:modelValue="toggleMediaSilenced">{{ i18n.ts.mediaSilenceThisInstance }}</MkSwitch>
 					<MkButton @click="refreshMetadata"><i class="ti ti-refresh"></i> Refresh metadata</MkButton>
 					<MkTextarea v-model="moderationNote" manualSave>
@@ -231,12 +231,14 @@ async function toggleBlock(): Promise<void> {
 	});
 }
 
-async function toggleSilence(): Promise<void> {
+async function toggleSilenced(): Promise<void> {
 	if (!iAmAdmin) return;
+	if (!meta.value) throw new Error('No meta?');
 	if (!instance.value) throw new Error('No instance?');
-	await misskeyApi('admin/federation/update-instance', {
-		host: instance.value.host,
-		isSilenced: isSilenced.value,
+	const { host } = instance.value;
+	const silencedHosts = meta.value.silencedHosts ?? [];
+	await misskeyApi('admin/update-meta', {
+		silencedHosts: isSilenced.value ? silencedHosts.concat([host]) : silencedHosts.filter(x => x !== host),
 	});
 }
 

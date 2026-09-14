@@ -52,7 +52,7 @@ export class InstanceEntityService {
 			description: instance.description,
 			maintainerName: instance.maintainerName,
 			maintainerEmail: instance.maintainerEmail,
-			isSilenced: instance.isSilenced,
+			isSilenced: this.utilityService.isSilencedHost(this.meta.silencedHosts, instance.host),
 			isMediaSilenced: this.utilityService.isMediaSilencedHost(this.meta.mediaSilencedHosts, instance.host),
 			iconUrl: instance.iconUrl,
 			faviconUrl: instance.faviconUrl,

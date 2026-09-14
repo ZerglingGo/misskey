@@ -9,6 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	ref="rootEl"
 	v-hotkey="keymap"
 	:class="[$style.root, { [$style.showActionsOnlyHover]: prefer.s.showNoteActionsOnlyHover, [$style.skipRender]: prefer.s.skipNoteRender }]"
+	tabindex="0"
 	@click="nav($event, notePage(appearNote))"
 >
 	<MkNoteSub v-if="appearNote.replyId && !renoteCollapsed" :note="appearNote?.reply ?? null" :class="$style.replyTo"/>
@@ -361,7 +362,7 @@ const keymap = {
 			renoteCollapsed.value = false;
 		} else if (appearNote.cw != null) {
 			showContent.value = !showContent.value;
-		} else if (isLong) {
+		} else if (isLong.value) {
 			collapsed.value = !collapsed.value;
 		}
 	},

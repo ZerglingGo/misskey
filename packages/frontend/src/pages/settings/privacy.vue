@@ -218,7 +218,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</FormSection>
 		</SearchMarker>
 
-		<!-- 자동 삭제 섹션 -->
+		<!-- bscone: auto-delete section -->
 		<SearchMarker :keywords="['auto', 'delete', 'notes']">
 			<FormSection>
 				<template #label><SearchLabel>{{ i18n.ts.autoDeleteNotes }}</SearchLabel></template>
@@ -442,7 +442,7 @@ watch([makeNotesFollowersOnlyBefore, makeNotesHiddenBefore], () => {
 	save();
 });
 
-// 자동 삭제 설정 저장
+// bscone: save auto-delete settings
 async function saveAutoDelete() {
 	await misskeyApi('i/update-auto-delete-settings', {
 		autoDeleteNotesAfterDays: autoDeleteNotesAfterDays.value,
@@ -451,7 +451,7 @@ async function saveAutoDelete() {
 	});
 }
 
-// 컴포넌트 마운트 시 설정 불러오기
+// bscone: load auto-delete settings on mount
 onMounted(async () => {
 	try {
 		const settings = await misskeyApi('i/auto-delete-settings');

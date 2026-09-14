@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { inject, defineAsyncComponent } from 'vue';
+import { inject, defineAsyncComponent, computed } from 'vue';
 import * as Misskey from 'misskey-js';
 import { i18n } from '@/i18n.js';
 import { notePage } from '@/filters/note.js';
@@ -62,7 +62,8 @@ const props = defineProps<{
 
 const mock = inject(DI.mock, false);
 
-const visibility = props.visibility ?? props.note.visibility;
+// bscone: visibility can change through note editing, so keep it reactive
+const visibility = computed(() => props.visibility ?? props.note.visibility);
 
 function showEditHistory() {
 	if (mock) return;

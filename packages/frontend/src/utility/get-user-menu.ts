@@ -417,7 +417,6 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 					prefer.commit('mutedAvatarDecorationUsers', list.concat(user.id));
 				}
 				await os.success();
-				window.location.reload();
 			},
 		}, {
 			icon: 'ti ti-ban',

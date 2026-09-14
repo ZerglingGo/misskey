@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div ref="rootEl" :class="[$style.root, { [$style.danger]: danger }]" role="group" :aria-expanded="opened">
+<div ref="rootEl" :class="$style.root" role="group" :aria-expanded="opened">
 	<MkStickyContainer>
 		<template #header>
 			<button :class="[$style.header, { [$style.opened]: opened }]" class="_button" role="button" data-testid="folder-header" @click="toggle">
@@ -105,7 +105,6 @@ import MkFolderPage from '@/components/MkFolderPage.vue';
 import { deviceKind } from '@/utility/device-kind.js';
 
 const props = withDefaults(defineProps<{
-	danger?: boolean;
 	defaultOpen?: boolean;
 	maxHeight?: number | null;
 	withSpacer?: boolean;
@@ -113,7 +112,6 @@ const props = withDefaults(defineProps<{
 	spacerMax?: number;
 	canPage?: boolean;
 }>(), {
-	danger: false,
 	defaultOpen: false,
 	maxHeight: null,
 	withSpacer: true,
@@ -235,10 +233,6 @@ watch(opened, (isOpened) => {
 
 .root {
 	display: block;
-
-	&.danger {
-		color: #ff2a2a;
-	}
 }
 
 .header {

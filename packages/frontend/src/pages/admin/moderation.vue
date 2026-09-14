@@ -106,6 +106,20 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkFolder>
 				</SearchMarker>
 
+				<SearchMarker :keywords="['silenced', 'servers', 'hosts']">
+					<MkFolder>
+						<template #icon><SearchIcon><i class="ti ti-eye-off"></i></SearchIcon></template>
+						<template #label><SearchLabel>{{ i18n.ts.silencedInstances }}</SearchLabel></template>
+
+						<div class="_gaps">
+							<MkTextarea v-model="silencedHosts">
+								<template #caption>{{ i18n.ts.silencedInstancesDescription }}</template>
+							</MkTextarea>
+							<MkButton primary @click="save_silencedHosts">{{ i18n.ts.save }}</MkButton>
+						</div>
+					</MkFolder>
+				</SearchMarker>
+
 				<SearchMarker :keywords="['media', 'silenced', 'servers', 'hosts']">
 					<MkFolder>
 						<template #icon><SearchIcon><i class="ti ti-eye-off"></i></SearchIcon></template>
@@ -178,6 +192,7 @@ const prohibitedWordsForNameOfUser = ref(meta.prohibitedWordsForNameOfUser.join(
 const hiddenTags = ref(meta.hiddenTags.join('\n'));
 const preservedUsernames = ref(meta.preservedUsernames.join('\n'));
 const blockedHosts = ref(meta.blockedHosts.join('\n'));
+const silencedHosts = ref(meta.silencedHosts?.join('\n') ?? '');
 const mediaSilencedHosts = ref(meta.mediaSilencedHosts.join('\n'));
 
 async function onChange_enableRegistration(value: boolean) {
@@ -257,6 +272,14 @@ function save_hiddenTags() {
 function save_blockedHosts() {
 	os.apiWithDialog('admin/update-meta', {
 		blockedHosts: blockedHosts.value.split('\n') || [],
+	}).then(() => {
+		fetchInstance(true);
+	});
+}
+
+function save_silencedHosts() {
+	os.apiWithDialog('admin/update-meta', {
+		silencedHosts: silencedHosts.value.split('\n') || [],
 	}).then(() => {
 		fetchInstance(true);
 	});

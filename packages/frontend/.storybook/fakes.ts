@@ -242,6 +242,9 @@ export function note(id = 'somenoteid'): entities.Note {
 		reactionCount: 0,
 		renoteCount: 0,
 		repliesCount: 0,
+		isEdited: false,
+		editCount: 0,
+		latestEditedAt: null,
 	};
 }
 
@@ -269,6 +272,7 @@ export function userDetailed(id = 'someuserid', username = 'miskist', host: enti
 		description: 'I am a cool user!',
 		followingVisibility: 'public',
 		followersVisibility: 'public',
+		bridgeHomeVisibility: false,
 		roles: [],
 		fields: [
 			{

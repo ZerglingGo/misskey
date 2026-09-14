@@ -89,8 +89,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <XStreamIndicator/>
 
-<div v-if="isThemeNotApplied" id="themeAlert"><span>테마가 정상적으로 로드되지 않았습니다.</span> <button @click="clearCache">캐시 초기화</button></div>
-
 <div v-if="pendingApiRequestsCount > 0" id="wait"></div>
 
 <div v-if="dev" id="devTicker"><span style="animation: dev-ticker-blink 2s infinite;">DEV BUILD</span></div>
@@ -121,13 +119,6 @@ import { prefer } from '@/preferences.js';
 import { globalEvents } from '@/events.js';
 import { store } from '@/store.js';
 import XNavbar from '@/ui/_common_/navbar.vue';
-import { clearCache } from '@/utility/clear-cache.js';
-
-const isThemeNotApplied = ref(false);
-
-if (!miLocalStorage.getItem('theme')) {
-	isThemeNotApplied.value = true;
-}
 
 const XStreamIndicator = defineAsyncComponent(() => import('./stream-indicator.vue'));
 const XWidgets = defineAsyncComponent(() => import('./widgets.vue'));
@@ -455,22 +446,5 @@ if ($i) {
 	font-size: 14px;
 	pointer-events: none;
 	user-select: none;
-}
-
-#themeAlert {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	margin: auto;
-	width: 100%;
-	height: max-content;
-	text-align: center;
-	z-index: 2147483647;
-	color: #ff0;
-	background-color: #211b19;
-	padding: 4px 7px;
-	font-size: 14px;
 }
 </style>

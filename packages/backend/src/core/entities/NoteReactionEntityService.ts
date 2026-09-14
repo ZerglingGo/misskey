@@ -51,7 +51,7 @@ export class NoteReactionEntityService implements OnModuleInit {
 		me?: { id: MiUser['id'] } | null | undefined,
 		options?: object,
 		hints?: {
-			packedUser?: Packed<'UserLite'>
+			packedUser?: Packed<'UserLite'> | Packed<'UserDetailedNotMe'>
 		},
 	): Promise<Packed<'NoteReaction'>> {
 		const _opts = Object.assign({
@@ -62,7 +62,8 @@ export class NoteReactionEntityService implements OnModuleInit {
 		return {
 			id: reaction.id,
 			createdAt: this.idService.parse(reaction.id).date.toISOString(),
-			user: await this.userEntityService.pack(reaction.user ?? reaction.userId, me, {
+			// bscone: pack as UserDetailedNotMe so the client can de-identify muted reactors (isMuted)
+			user: hints?.packedUser ?? await this.userEntityService.pack(reaction.user ?? reaction.userId, me, {
 				schema: 'UserDetailedNotMe',
 			}),
 			type: this.reactionService.convertLegacyReaction(reaction.reaction),
@@ -78,7 +79,8 @@ export class NoteReactionEntityService implements OnModuleInit {
 		const opts = Object.assign({
 		}, options);
 		const _users = reactions.map(({ user, userId }) => user ?? userId);
-		const _userMap = await this.userEntityService.packMany(_users, me)
+		// bscone: batch-pack as UserDetailedNotMe (see pack) to avoid per-user packing
+		const _userMap = await this.userEntityService.packMany(_users, me, { schema: 'UserDetailedNotMe' })
 			.then(users => new Map(users.map(u => [u.id, u])));
 		return Promise.all(reactions.map(reaction => this.pack(reaction, me, opts, { packedUser: _userMap.get(reaction.userId) })));
 	}

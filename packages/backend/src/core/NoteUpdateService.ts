@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { setImmediate } from 'node:timers/promises';
 import { In } from 'typeorm';
 import * as mfm from 'mfm-js';
