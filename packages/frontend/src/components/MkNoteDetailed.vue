@@ -143,8 +143,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkA :to="notePage(appearNote)">
 						<MkTime :time="appearNote.createdAt" mode="detail" colored/>
 					</MkA>
-					<span style="margin-left: 0.5em;">
-						<span style="border: 1px solid var(--MI_THEME-divider); margin-right: 0.5em;"></span>
+					<span>
 						<i v-if="$appearNote.visibility === 'public'" class="ti ti-world"></i>
 						<i v-else-if="$appearNote.visibility === 'home'" class="ti ti-home"></i>
 						<i v-else-if="$appearNote.visibility === 'followers'" class="ti ti-lock"></i>
