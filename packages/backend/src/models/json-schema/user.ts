@@ -104,6 +104,15 @@ export const packedUserLiteSchema = {
 						type: 'number',
 						nullable: false, optional: true,
 					},
+					// bscone: CherryPick's extra transform fields (present on remote users fetched from CherryPick)
+					scale: {
+						type: 'number',
+						nullable: false, optional: true,
+					},
+					opacity: {
+						type: 'number',
+						nullable: false, optional: true,
+					},
 				},
 			},
 		},

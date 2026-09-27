@@ -5121,6 +5121,10 @@ export interface Locale extends ILocale {
      */
     "showAvatarDecorations": string;
     /**
+     * リモートユーザーのアイコンのデコレーションを表示
+     */
+    "showRemoteAvatarDecorations": string;
+    /**
      * 離してリロード
      */
     "releaseToRefresh": string;

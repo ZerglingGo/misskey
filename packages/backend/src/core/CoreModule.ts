@@ -23,6 +23,7 @@ import { AnnouncementService } from './AnnouncementService.js';
 import { AntennaService } from './AntennaService.js';
 import { AchievementService } from './AchievementService.js';
 import { AvatarDecorationService } from './AvatarDecorationService.js';
+import { RemoteAvatarDecorationService } from './RemoteAvatarDecorationService.js';
 import { CaptchaService } from './CaptchaService.js';
 import { CustomEmojiService } from './CustomEmojiService.js';
 import { DeleteAccountService } from './DeleteAccountService.js';
@@ -172,6 +173,7 @@ const $AnnouncementService: Provider = { provide: 'AnnouncementService', useExis
 const $AntennaService: Provider = { provide: 'AntennaService', useExisting: AntennaService };
 const $AchievementService: Provider = { provide: 'AchievementService', useExisting: AchievementService };
 const $AvatarDecorationService: Provider = { provide: 'AvatarDecorationService', useExisting: AvatarDecorationService };
+const $RemoteAvatarDecorationService: Provider = { provide: 'RemoteAvatarDecorationService', useExisting: RemoteAvatarDecorationService };
 const $CaptchaService: Provider = { provide: 'CaptchaService', useExisting: CaptchaService };
 const $CustomEmojiService: Provider = { provide: 'CustomEmojiService', useExisting: CustomEmojiService };
 const $DeleteAccountService: Provider = { provide: 'DeleteAccountService', useExisting: DeleteAccountService };
@@ -328,6 +330,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AntennaService,
 		AchievementService,
 		AvatarDecorationService,
+		RemoteAvatarDecorationService,
 		CaptchaService,
 		CustomEmojiService,
 		DeleteAccountService,
@@ -482,6 +485,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AntennaService,
 		$AchievementService,
 		$AvatarDecorationService,
+		$RemoteAvatarDecorationService,
 		$CaptchaService,
 		$CustomEmojiService,
 		$DeleteAccountService,
@@ -636,6 +640,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AntennaService,
 		AchievementService,
 		AvatarDecorationService,
+		RemoteAvatarDecorationService,
 		CaptchaService,
 		CustomEmojiService,
 		DeleteAccountService,
@@ -789,6 +794,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AntennaService,
 		$AchievementService,
 		$AvatarDecorationService,
+		$RemoteAvatarDecorationService,
 		$CaptchaService,
 		$CustomEmojiService,
 		$DeleteAccountService,

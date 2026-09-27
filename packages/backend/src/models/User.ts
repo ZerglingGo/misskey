@@ -151,6 +151,11 @@ export class MiUser {
 		flipH?: boolean;
 		offsetX?: number;
 		offsetY?: number;
+		// bscone: remote users store the image url fetched from their home instance (see RemoteAvatarDecorationService),
+		// plus CherryPick's extra transform fields so its users render the same here
+		url?: string;
+		scale?: number;
+		opacity?: number;
 	}[];
 
 	@Index()

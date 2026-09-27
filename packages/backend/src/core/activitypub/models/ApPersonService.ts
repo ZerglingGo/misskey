@@ -37,6 +37,7 @@ import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { AccountMoveService } from '@/core/AccountMoveService.js';
+import type { RemoteAvatarDecorationService } from '@/core/RemoteAvatarDecorationService.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { getApId, getApType, getOneApHrefNullable, isActor, isCollection, isCollectionOrOrderedCollection, isPropertyValue } from '../type.js';
 import { extractApHashtags } from './tag.js';
@@ -74,6 +75,7 @@ export class ApPersonService implements OnModuleInit {
 	private instanceChart: InstanceChart;
 	private apLoggerService: ApLoggerService;
 	private accountMoveService: AccountMoveService;
+	private remoteAvatarDecorationService: RemoteAvatarDecorationService;
 	private logger: Logger;
 
 	constructor(
@@ -126,6 +128,7 @@ export class ApPersonService implements OnModuleInit {
 		this.instanceChart = this.moduleRef.get('InstanceChart');
 		this.apLoggerService = this.moduleRef.get('ApLoggerService');
 		this.accountMoveService = this.moduleRef.get('AccountMoveService');
+		this.remoteAvatarDecorationService = this.moduleRef.get('RemoteAvatarDecorationService');
 		this.logger = this.apLoggerService.logger;
 	}
 
@@ -472,6 +475,18 @@ export class ApPersonService implements OnModuleInit {
 		}
 		//#endregion
 
+		// bscone: pull avatar decorations from the user's home instance (Misskey-family only; fetchUpdates never throws)
+		try {
+			const updates = await this.remoteAvatarDecorationService.fetchUpdates(user, person);
+			if (updates.avatarDecorations != null) {
+				await this.usersRepository.update(user.id, updates);
+				user = { ...user, ...updates };
+				this.cacheService.uriPersonCache.set(user.uri, user);
+			}
+		} catch (err) {
+			this.logger.error('error occurred while fetching user avatar decorations', { stack: err });
+		}
+
 		await this.updateFeatured(user.id, resolver).catch(err => this.logger.error(err));
 
 		return user;
@@ -571,6 +586,8 @@ export class ApPersonService implements OnModuleInit {
 			alsoKnownAs: person.alsoKnownAs ? toArray(person.alsoKnownAs) : null,
 			isExplorable: person.discoverable,
 			...(await this.resolveAvatarAndBanner(exist, person.icon, person.image).catch(() => ({}))),
+			// bscone: avatar decorations come from the home instance's API, not from the actor object
+			...(await this.remoteAvatarDecorationService.fetchUpdates(exist, person)),
 		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable'>;
 
 		const moving = ((): boolean => {

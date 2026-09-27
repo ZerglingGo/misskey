@@ -33,6 +33,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 				rotate: getDecorationAngle(decoration),
 				scale: getDecorationScale(decoration),
 				translate: getDecorationOffset(decoration),
+				transform: getDecorationTransform(decoration),
+				opacity: getDecorationOpacity(decoration),
 			}"
 			alt=""
 			draggable="false"
@@ -84,8 +86,8 @@ const emit = defineEmits<{
 	(ev: 'click', v: PointerEvent): void;
 }>();
 
-// bscone: react to avatar decoration mute toggles without a reload
-const showDecoration = computed(() => (props.forceShowDecoration || prefer.r.showAvatarDecorations.value) && !prefer.r.mutedAvatarDecorationUsers.value.includes(props.user.id));
+// bscone: react to avatar decoration mute toggles without a reload; remote users' decorations can be hidden separately
+const showDecoration = computed(() => (props.forceShowDecoration || (prefer.r.showAvatarDecorations.value && (props.user.host == null || prefer.r.showRemoteAvatarDecorations.value))) && !prefer.r.mutedAvatarDecorationUsers.value.includes(props.user.id));
 
 const bound = computed(() => props.link
 	? { to: userPage(props.user), target: props.target }
@@ -124,6 +126,17 @@ function getDecorationOffset(decoration: Decoration | DecorationEditorDecoration
 
 function getDecorationIsBrink(decoration: Decoration | DecorationEditorDecoration) {
 	return 'blink' in decoration && decoration.blink === true;
+}
+
+// bscone: CherryPick's extra transform fields (scale / opacity), applied the same way CherryPick renders them
+function getDecorationTransform(decoration: Decoration | DecorationEditorDecoration) {
+	const scale = decoration.scale ?? 1;
+	return scale === 1 ? undefined : `scale(${scale})`;
+}
+
+function getDecorationOpacity(decoration: Decoration | DecorationEditorDecoration) {
+	const opacity = decoration.opacity ?? 1;
+	return opacity === 1 ? undefined : opacity;
 }
 
 const color = ref<string | undefined>();

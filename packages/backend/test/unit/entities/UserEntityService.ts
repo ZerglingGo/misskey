@@ -21,6 +21,7 @@ import {
 } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
+import { RemoteAvatarDecorationService } from '@/core/RemoteAvatarDecorationService.js';
 import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { PageEntityService } from '@/core/entities/PageEntityService.js';
@@ -152,6 +153,7 @@ describe('UserEntityService', () => {
 				FederatedInstanceService,
 				IdService,
 				AvatarDecorationService,
+				RemoteAvatarDecorationService, // bscone: resolved by UserEntityService.onModuleInit via moduleRef
 				UtilityService,
 				EmojiEntityService,
 				ModerationLogService,

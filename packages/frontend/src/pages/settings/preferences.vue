@@ -81,6 +81,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 								</MkPreferenceContainer>
 							</SearchMarker>
 
+							<!-- bscone: remote avatar decoration toggle (only meaningful while decorations are shown at all) -->
+							<MkDisableSection :disabled="!showAvatarDecorations">
+								<SearchMarker :keywords="['avatar', 'icon', 'decoration', 'remote', 'show']">
+									<MkPreferenceContainer k="showRemoteAvatarDecorations">
+										<MkSwitch v-model="showRemoteAvatarDecorations">
+											<template #label><SearchLabel>{{ i18n.ts.showRemoteAvatarDecorations }}</SearchLabel></template>
+										</MkSwitch>
+									</MkPreferenceContainer>
+								</SearchMarker>
+							</MkDisableSection>
+
 							<SearchMarker :keywords="['follow', 'confirm', 'always']">
 								<MkPreferenceContainer k="alwaysConfirmFollow">
 									<MkSwitch v-model="alwaysConfirmFollow">
@@ -946,6 +957,7 @@ const squareAvatars = prefer.model('squareAvatars');
 const enableSeasonalScreenEffect = prefer.model('enableSeasonalScreenEffect');
 const disableCatSpeech = prefer.model('disableCatSpeech');
 const showAvatarDecorations = prefer.model('showAvatarDecorations');
+const showRemoteAvatarDecorations = prefer.model('showRemoteAvatarDecorations');
 const nsfw = prefer.model('nsfw');
 const emojiStyle = prefer.model('emojiStyle');
 const useBlurEffectForModal = prefer.model('useBlurEffectForModal');

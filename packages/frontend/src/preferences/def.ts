@@ -291,6 +291,10 @@ export const PREF_DEF = definePreferences({
 	showAvatarDecorations: {
 		default: true,
 	},
+	// bscone: remote users' decorations are fetched from their home instance; allow hiding them separately
+	showRemoteAvatarDecorations: {
+		default: true,
+	},
 	mutedAvatarDecorationUsers: {
 		accountDependent: true,
 		default: [] as string[],

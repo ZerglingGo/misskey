@@ -4096,6 +4096,8 @@ export type components = {
                 url: string;
                 offsetX?: number;
                 offsetY?: number;
+                scale?: number;
+                opacity?: number;
             }[];
             isBot?: boolean;
             isCat?: boolean;

@@ -30,6 +30,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 			rotate: getDecorationAngle(decoration),
 			scale: getDecorationScale(decoration),
 			translate: getDecorationOffset(decoration),
+			transform: getDecorationTransform(decoration),
+			opacity: getDecorationOpacity(decoration),
 		}"
 		alt=""
 	>
@@ -85,6 +87,17 @@ function getDecorationOffset(decoration: Omit<Misskey.entities.UserDetailed['ava
 	const offsetX = decoration.offsetX ?? 0;
 	const offsetY = decoration.offsetY ?? 0;
 	return offsetX === 0 && offsetY === 0 ? undefined : `${offsetX * 100}% ${offsetY * 100}%`;
+}
+
+// bscone: CherryPick's extra transform fields (scale / opacity), applied the same way CherryPick renders them
+function getDecorationTransform(decoration: Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'>) {
+	const scale = decoration.scale ?? 1;
+	return scale === 1 ? undefined : `scale(${scale})`;
+}
+
+function getDecorationOpacity(decoration: Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'>) {
+	const opacity = decoration.opacity ?? 1;
+	return opacity === 1 ? undefined : opacity;
 }
 </script>
 
