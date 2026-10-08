@@ -6,7 +6,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteUpdateService } from '@/core/NoteUpdateService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { DI } from '@/di-symbols.js';
@@ -68,6 +67,18 @@ export const meta = {
 			code: 'ACCESS_DENIED',
 			id: 'b885c0e1-2f45-4c8a-9d7e-f3a7e8d9c1b0',
 		},
+
+		contentRestrictedByUser: {
+			message: 'Content restricted by user. Please sign in to view.',
+			code: 'CONTENT_RESTRICTED_BY_USER',
+			id: '7e975831-ff6e-4fcd-9cb3-207e672c4ba8',
+		},
+
+		contentRestrictedByServer: {
+			message: 'Content restricted by server settings. Please sign in to view.',
+			code: 'CONTENT_RESTRICTED_BY_SERVER',
+			id: 'a0349ea6-5513-49a7-8ac0-13620f40ec79',
+		},
 	},
 } as const;
 
@@ -90,7 +101,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private getterService: GetterService,
 		private noteUpdateService: NoteUpdateService,
-		private noteEntityService: NoteEntityService,
 		private userEntityService: UserEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
@@ -99,10 +109,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw err;
 			});
 
-			// Check if the requester can view the note
-			const canView = await this.noteEntityService.isVisibleForMe(note, me?.id ?? null);
-			if (!canView) {
-				throw new ApiError(meta.errors.accessDenied);
+			// bscone: apply the same visitor restrictions as notes/show in addition to note visibility
+			switch (await this.noteUpdateService.checkRevisionsAccess(note, me?.id ?? null)) {
+				case 'restrictedByUser': throw new ApiError(meta.errors.contentRestrictedByUser);
+				case 'restrictedByServer': throw new ApiError(meta.errors.contentRestrictedByServer);
+				case 'invisible': throw new ApiError(meta.errors.accessDenied);
 			}
 
 			// Build query with pagination

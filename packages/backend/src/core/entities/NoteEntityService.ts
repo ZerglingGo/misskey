@@ -59,6 +59,9 @@ async function nullIfEntityNotFound<T>(promise: Promise<T>): Promise<T | null> {
 	}
 }
 
+// bscone: edit metadata derived from note_revision
+type EditMetadata = { editCount: number; latestEditedAt: Date | null };
+
 @Injectable()
 export class NoteEntityService implements OnModuleInit {
 	private userEntityService: UserEntityService;
@@ -330,22 +333,28 @@ export class NoteEntityService implements OnModuleInit {
 		return true;
 	}
 
+	/**
+	 * bscone: edit count and latest edit time of the given notes in a single query.
+	 * Every requested ID gets an entry (notes without revisions get editCount 0).
+	 */
 	@bindThis
-	private async getEditMetadata(noteId: MiNote['id']): Promise<{ editCount: number; latestEditedAt: Date | null }> {
-		const revisionCount = await this.noteRevisionsRepository.countBy({ noteId });
-		if (revisionCount === 0) {
-			return { editCount: 0, latestEditedAt: null };
+	private async getEditMetadataMany(noteIds: MiNote['id'][]): Promise<Map<MiNote['id'], EditMetadata>> {
+		const result = new Map<MiNote['id'], EditMetadata>(noteIds.map(id => [id, { editCount: 0, latestEditedAt: null }]));
+		if (noteIds.length === 0) return result;
+
+		const rows = await this.noteRevisionsRepository.createQueryBuilder('revision')
+			.select('revision.noteId', 'noteId')
+			.addSelect('COUNT(*)', 'count')
+			.addSelect('MAX(revision.createdAt)', 'latest')
+			.where('revision.noteId IN (:...noteIds)', { noteIds })
+			.groupBy('revision.noteId')
+			.getRawMany<{ noteId: MiNote['id']; count: string; latest: Date | null }>();
+
+		for (const row of rows) {
+			result.set(row.noteId, { editCount: Number(row.count), latestEditedAt: row.latest });
 		}
 
-		const latestRevision = await this.noteRevisionsRepository.findOne({
-			where: { noteId },
-			order: { version: 'DESC' },
-		});
-
-		return {
-			editCount: revisionCount,
-			latestEditedAt: latestRevision?.createdAt ?? null,
-		};
+		return result;
 	}
 
 	@bindThis
@@ -376,6 +385,8 @@ export class NoteEntityService implements OnModuleInit {
 				myReactions: Map<MiNote['id'], string | null>;
 				packedFiles: Map<MiNote['fileIds'][number], Packed<'DriveFile'> | null>;
 				packedUsers: Map<MiUser['id'], Packed<'UserLite'>>
+				// bscone: prefetched by packMany
+				editMetadata?: Map<MiNote['id'], EditMetadata>;
 			};
 		},
 	): Promise<Packed<'Note'>> {
@@ -416,11 +427,12 @@ export class NoteEntityService implements OnModuleInit {
 		const packedFiles = options?._hint_?.packedFiles;
 		const packedUsers = options?._hint_?.packedUsers;
 
-		const editMetadata = note.updatedAt
-			? await this.getEditMetadata(note.id)
+		// bscone: only notes with updatedAt can have revisions; use the packMany prefetch when available
+		const editMetadata: EditMetadata = note.updatedAt
+			? options?._hint_?.editMetadata?.get(note.id) ?? (await this.getEditMetadataMany([note.id])).get(note.id)!
 			: { editCount: 0, latestEditedAt: null };
-		const editCount = editMetadata?.editCount ?? 0;
-		const latestEditedAt = editMetadata?.latestEditedAt ?? null;
+		const editCount = editMetadata.editCount;
+		const latestEditedAt = editMetadata.latestEditedAt;
 		const isEdited = editCount > 0;
 
 		const packed: Packed<'Note'> = await awaitAll({
@@ -586,6 +598,13 @@ export class NoteEntityService implements OnModuleInit {
 		const packedUsers = await this.userEntityService.packMany(users, me)
 			.then(users => new Map(users.map(u => [u.id, u])));
 
+		// bscone: prefetch edit metadata of every edited note that appears (including loaded renotes / replies)
+		const editedNoteIds = new Set(notes
+			.flatMap(n => [n, n.renote, n.reply, n.renote?.reply])
+			.filter(n => n?.updatedAt != null)
+			.map(n => n!.id));
+		const editMetadata = await this.getEditMetadataMany([...editedNoteIds]);
+
 		return await Promise.all(notes.map(n => this.pack(n, me, {
 			...options,
 			_hint_: {
@@ -593,6 +612,7 @@ export class NoteEntityService implements OnModuleInit {
 				myReactions: myReactionsMap,
 				packedFiles,
 				packedUsers,
+				editMetadata,
 			},
 		})));
 	}

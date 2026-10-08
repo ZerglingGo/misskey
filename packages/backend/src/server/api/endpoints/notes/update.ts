@@ -13,6 +13,7 @@ import { GetterService } from '@/server/api/GetterService.js';
 import { RoleService } from '@/core/RoleService.js';
 import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
+import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -61,6 +62,18 @@ export const meta = {
 			code: 'INVALID_PARAM',
 			id: '3d81ceae-475f-4600-b2a8-2bc116157532',
 		},
+
+		containsProhibitedWords: {
+			message: 'Cannot post because it contains prohibited words.',
+			code: 'CONTAINS_PROHIBITED_WORDS',
+			id: '208d77b9-93c6-43b7-b669-aef1a23ab627',
+		},
+
+		cannotFederateChannelNote: {
+			message: 'Channel notes must be local only.',
+			code: 'CANNOT_FEDERATE_CHANNEL_NOTE',
+			id: 'bdd090b6-d1f2-4a52-879a-3b5cb47037bc',
+		},
 	},
 } as const;
 
@@ -93,7 +106,8 @@ export const paramDef = {
 					uniqueItems: true,
 					minItems: 2,
 					maxItems: 10,
-					items: { type: 'string', minLength: 1, maxLength: 256 },
+					// bscone: same limit as notes/create
+					items: { type: 'string', minLength: 1, maxLength: 50 },
 				},
 				multiple: { type: 'boolean' },
 				expiresAt: { type: 'integer', nullable: true },
@@ -116,7 +130,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private noteEntityService: NoteEntityService,
 		private noteUpdateService: NoteUpdateService,
 	) {
-		super(meta, paramDef, async (ps, me) => {
+		super(meta, paramDef, async (ps, me, token) => {
 			const note = await this.getterService.getNote(ps.noteId).catch(err => {
 				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
 				throw err;
@@ -127,6 +141,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			// Check if user is the note author or has moderator/admin privileges
 			if (note.userId !== me.id && !isModerator && !isAdministrator) {
+				throw new ApiError(meta.errors.accessDenied);
+			}
+
+			// bscone: editing someone else's note is only allowed from the web client, not from third-party app tokens
+			if (note.userId !== me.id && token != null) {
 				throw new ApiError(meta.errors.accessDenied);
 			}
 
@@ -162,7 +181,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				fileIds: ps.fileIds,
 				poll: poll,
 				updatedAt: new Date(),
-			}, false, me);
+			}, false, me).catch(err => {
+				// bscone: map content check failures from the service to API errors
+				if (err instanceof IdentifiableError) {
+					if (err.id === '689ee33f-f97c-479a-ac49-1b9f8140af99') throw new ApiError(meta.errors.containsProhibitedWords);
+					if (err.id === 'ebefddac-1838-4731-9701-f022bd539f2f') throw new ApiError(meta.errors.cannotFederateChannelNote);
+				}
+				throw err;
+			});
 
 			return {
 				updatedNote: await this.noteEntityService.pack(updatedNote, me),

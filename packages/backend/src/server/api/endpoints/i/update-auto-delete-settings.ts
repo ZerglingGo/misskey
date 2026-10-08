@@ -13,6 +13,9 @@ export const meta = {
 
 	requireCredential: true,
 
+	// bscone: this setting deletes notes in bulk, so restrict it to the native client like i/truncate-account
+	secure: true,
+
 	kind: 'write:account',
 
 	errors: {
@@ -28,7 +31,7 @@ export const paramDef = {
 	type: 'object',
 	properties: {
 		autoDeleteNotesAfterDays: {
-			type: 'number',
+			type: 'integer',
 			nullable: true,
 			minimum: 1,
 			maximum: 3650, // 최대 10년
@@ -64,9 +67,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				updates.autoDeleteKeepDriveFiles = ps.autoDeleteKeepDriveFiles;
 			}
 
+			// bscone: return nothing; returning the raw user entity exposed the account token
 			await this.usersRepository.update(me.id, updates);
-
-			return await this.usersRepository.findOneByOrFail({ id: me.id });
 		});
 	}
 }

@@ -6,7 +6,8 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { MetricsTime, type JobType } from 'bullmq';
-import { isDelete, type IActivity } from '@/core/activitypub/type.js';
+import type { IActivity } from '@/core/activitypub/type.js';
+import { isBulkDelivery } from '@/misc/bulk-delivery-context.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
@@ -165,7 +166,8 @@ export class QueueService {
 			isSharedInbox,
 		};
 
-		const priority = isDelete(content) ? 10 : 0;
+		// bscone: only bulk deletions are queued behind other deliveries
+		const priority = isBulkDelivery() ? 10 : 0;
 
 		const label = to.replace('https://', '').replace('/inbox', '');
 
@@ -199,7 +201,8 @@ export class QueueService {
 		const contentBody = JSON.stringify(content);
 		const digest = ApRequestCreator.createDigest(contentBody);
 
-		const priority = isDelete(content) ? 10 : 0;
+		// bscone: only bulk deletions are queued behind other deliveries
+		const priority = isBulkDelivery() ? 10 : 0;
 
 		const opts = {
 			attempts: this.config.deliverJobMaxAttempts ?? 12,
@@ -580,7 +583,11 @@ export class QueueService {
 			keepFavorites: opts.keepFavorites ?? false,
 		}, {
 			removeOnComplete: true,
-			removeOnFail: true,
+			// bscone: keep failed jobs for a week so that admins can see them in the job queue
+			removeOnFail: {
+				age: 3600 * 24 * 7,
+				count: 100,
+			},
 		});
 	}
 
@@ -591,7 +598,11 @@ export class QueueService {
 			keepFavorites: opts.keepFavorites ?? false,
 		}, {
 			removeOnComplete: true,
-			removeOnFail: true,
+			// bscone: keep failed jobs for a week so that admins can see them in the job queue
+			removeOnFail: {
+				age: 3600 * 24 * 7,
+				count: 100,
+			},
 		});
 	}
 

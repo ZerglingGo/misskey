@@ -799,7 +799,7 @@ export class ApInboxService {
 			await this.apQuestionService.updateQuestion(object, actor, resolver).catch(err => console.error(err));
 			return 'ok: Question updated';
 		} else if (getApType(object) === 'Note') {
-			await this.apNoteService.updateNote(object, resolver).catch(err => console.error(err));
+			await this.apNoteService.updateNote(object, actor, resolver).catch(err => console.error(err));
 			return 'ok: Note updated';
 		} else {
 			return `skip: Unknown type: ${getApType(object)}`;

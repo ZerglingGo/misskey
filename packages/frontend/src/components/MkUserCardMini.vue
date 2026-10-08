@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<{
 	withChart: true,
 });
 
-// bscone: de-identify muted users (isMuted only exists on UserDetailed)
+// bscone: de-identify muted users (isMuted exists on UserDetailed and on reactors returned by notes/reactions)
 const deidentified = computed(() => prefer.s.deidentifyMutedUsers && 'isMuted' in props.user && props.user.isMuted === true);
 
 const chartValues = ref<number[] | null>(null);

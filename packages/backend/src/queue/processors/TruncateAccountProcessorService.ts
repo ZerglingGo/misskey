@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Brackets, And, In, MoreThan, Not } from 'typeorm';
+import { And, In, MoreThan, Not, Raw } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { DriveFilesRepository, NotesRepository, UserNotePiningsRepository, UsersRepository, NoteFavoritesRepository } from '@/models/_.js';
 import type Logger from '@/logger.js';
@@ -13,6 +13,7 @@ import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
 import { bindThis } from '@/decorators.js';
 import { NoteDeleteService } from '@/core/NoteDeleteService.js';
+import { findOwnCascadingNoteIds } from '@/misc/find-own-cascading-note-ids.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
 import type * as Bull from 'bullmq';
 import type { DbUserTruncateJobData } from '../types.js';
@@ -57,14 +58,14 @@ export class TruncateAccountProcessorService {
 
 		const pinings = await this.userNotePiningsRepository.findBy({ userId: user.id });
 		const piningNoteIds = pinings.map(pining => pining.noteId); // pining.note always undefined (bug?)
-		const cascadingPiningNoteIds = piningNoteIds.length !== 0 ? await this.findCascadingNotes(piningNoteIds) : [];
+		const cascadingPiningNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, piningNoteIds);
 
 		const specifiedNotes = await this.notesRepository.findBy({
 			userId: user.id,
 			visibility: Not(In(['public', 'home', 'followers'])),
 		});
 		const specifiedNoteIds = specifiedNotes.map(note => note.id);
-		const cascadingSpecifiedNoteIds = specifiedNoteIds.length !== 0 ? await this.findCascadingNotes(specifiedNoteIds) : [];
+		const cascadingSpecifiedNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, specifiedNoteIds);
 
 		// 즐겨찾기 보호 옵션이 켜져 있으면 즐겨찾기한 노트도 보호
 		let favoriteNoteIds: MiNote['id'][] = [];
@@ -72,17 +73,19 @@ export class TruncateAccountProcessorService {
 		if (keepFavorites) {
 			const favorites = await this.noteFavoritesRepository.findBy({ userId: user.id });
 			favoriteNoteIds = favorites.map(fav => fav.noteId);
-			cascadingFavoriteNoteIds = favoriteNoteIds.length !== 0 ? await this.findCascadingNotes(favoriteNoteIds) : [];
+			cascadingFavoriteNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, favoriteNoteIds);
 			this.logger.info(`Found ${favoriteNoteIds.length} favorite notes to keep`);
 		}
 
 		const protectedNoteIds = [...piningNoteIds, ...cascadingPiningNoteIds, ...specifiedNoteIds, ...cascadingSpecifiedNoteIds, ...favoriteNoteIds, ...cascadingFavoriteNoteIds];
+		// bscone: pass the protected IDs as one array parameter (NOT IN with many binds can exceed the parameter limit)
+		const notInProtected = Raw(alias => `${alias} <> ALL(:protectedNoteIds)`, { protectedNoteIds });
 
-		const keepFileIds = (await Promise.all(protectedNoteIds.map(async (noteId) => {
-			const note = await this.notesRepository.findOneBy({ id: noteId });
-
-			return note?.fileIds;
-		}))).flat().filter((fileId) => fileId !== undefined);
+		// bscone: fetch the files of all protected notes in one query
+		const keepFileIds = (await this.notesRepository.find({
+			select: { id: true, fileIds: true },
+			where: { id: Raw(alias => `${alias} = ANY(:protectedNoteIds)`, { protectedNoteIds }) },
+		})).flatMap(note => note.fileIds);
 
 		if (user.avatarId) {
 			keepFileIds.push(user.avatarId);
@@ -100,9 +103,9 @@ export class TruncateAccountProcessorService {
 					where: {
 						userId: user.id,
 						...(cursor ? {
-							id: And(Not(In(protectedNoteIds)), MoreThan(cursor)),
+							id: And(notInProtected, MoreThan(cursor)),
 						} : {
-							id: Not(In(protectedNoteIds)),
+							id: notInProtected,
 						}),
 					},
 					take: 100,
@@ -126,6 +129,8 @@ export class TruncateAccountProcessorService {
 		}
 
 		{ // Delete files
+			// bscone: same single array parameter as for notes
+			const notInKeepFiles = Raw(alias => `${alias} <> ALL(:keepFileIds)`, { keepFileIds });
 			let cursor: MiDriveFile['id'] | null = null;
 
 			while (true) {
@@ -133,9 +138,9 @@ export class TruncateAccountProcessorService {
 					where: {
 						userId: user.id,
 						...(cursor ? {
-							id: And(Not(In(keepFileIds)), MoreThan(cursor)),
+							id: And(notInKeepFiles, MoreThan(cursor)),
 						} : {
-							id: Not(In(keepFileIds)),
+							id: notInKeepFiles,
 						}),
 					},
 					take: 10,
@@ -159,27 +164,5 @@ export class TruncateAccountProcessorService {
 		}
 
 		return 'Account notes and drives are truncated';
-	}
-
-	@bindThis
-	private async findCascadingNotes(noteIds: MiNote['id'][]): Promise<MiNote['id'][]> {
-		const recursive = async (noteIds: MiNote['id'][]): Promise<MiNote['id'][]> => {
-			const query = this.notesRepository.createQueryBuilder('note')
-				.where('note.replyId IN(:...noteIds)', { noteIds })
-				.orWhere(new Brackets(q => {
-					q.where('note.renoteId IN(:...noteIds)', { noteIds })
-						.andWhere('note.text IS NOT NULL');
-				}));
-			const replies = await query.getMany();
-
-			return [
-				...replies.map((reply) => reply.id),
-				...await Promise.all(replies.map(reply => recursive([reply.id]))),
-			].flat();
-		};
-
-		const cascadingNotes: MiNote['id'][] = await recursive(noteIds);
-
-		return cascadingNotes;
 	}
 }

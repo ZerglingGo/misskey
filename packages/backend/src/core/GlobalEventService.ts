@@ -25,7 +25,7 @@ import type { Packed } from '@/misc/json-schema.js';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { bindThis } from '@/decorators.js';
-import { Serialized, noteVisibilities } from '@/types.js';
+import { Serialized } from '@/types.js';
 import type Emitter from 'strict-event-emitter-types';
 import type { EventEmitter } from 'events';
 
@@ -109,13 +109,9 @@ export interface NoteEventTypes {
 	deleted: {
 		deletedAt: Date;
 	};
+	// bscone: carries no content; clients refetch the note via notes/show
 	updated: {
-		cw?: string | null;
-		text?: string | null;
-		visibility?: typeof noteVisibilities[number];
 		updatedAt: Date;
-		fileIds?: MiDriveFile['id'][] | null;
-		hasPoll?: boolean;
 	};
 	reacted: {
 		reaction: string;

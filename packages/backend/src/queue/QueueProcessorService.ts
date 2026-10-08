@@ -50,6 +50,7 @@ import { AggregateRetentionProcessorService } from './processors/AggregateRetent
 import { CleanRemoteNotesProcessorService } from './processors/CleanRemoteNotesProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
+import { runAsBulkDelivery } from '@/misc/bulk-delivery-context.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
 // ref. https://github.com/misskey-dev/misskey/pull/7635#issue-971097019
@@ -179,7 +180,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'checkModeratorsActivity': return this.checkModeratorsActivityProcessorService.process();
 					case 'clean': return this.cleanProcessorService.process();
 					case 'cleanRemoteNotes': return this.cleanRemoteNotesProcessorService.process(job);
-					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
+					case 'autoDeleteNotes': return runAsBulkDelivery(() => this.autoDeleteNotesProcessorService.process(job)); // bscone: low delivery priority
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
 			};
@@ -234,8 +235,8 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'importCustomEmojis': return this.importCustomEmojisProcessorService.process(job);
 					case 'importAntennas': return this.importAntennasProcessorService.process(job);
 					case 'deleteAccount': return this.deleteAccountProcessorService.process(job);
-					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
-					case 'truncateAccountKeepDrive': return this.truncateAccountKeepDriveProcessorService.process(job);
+					case 'truncateAccount': return runAsBulkDelivery(() => this.truncateAccountProcessorService.process(job)); // bscone: low delivery priority
+					case 'truncateAccountKeepDrive': return runAsBulkDelivery(() => this.truncateAccountKeepDriveProcessorService.process(job)); // bscone: low delivery priority
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};
@@ -470,7 +471,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 				switch (job.name) {
 					case 'deleteFile': return this.deleteFileProcessorService.process(job);
 					case 'cleanRemoteFiles': return this.cleanRemoteFilesProcessorService.process(job);
-					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
+					case 'autoDeleteNotes': return runAsBulkDelivery(() => this.autoDeleteNotesProcessorService.process(job)); // bscone: low delivery priority
 					default: throw new Error(`unrecognized job type ${job.name} for objectStorage`);
 				}
 			};

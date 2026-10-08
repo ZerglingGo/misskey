@@ -9,7 +9,7 @@ import * as mfm from 'mfm-js';
 import { Injectable, Inject, OnApplicationShutdown } from '@nestjs/common';
 import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import type { IMentionedRemoteUsers, MiNote } from '@/models/Note.js';
-import type { InstancesRepository, NotesRepository, UsersRepository, NoteRevisionsRepository, PollsRepository, DriveFilesRepository, UserProfilesRepository } from '@/models/_.js';
+import type { InstancesRepository, NotesRepository, UsersRepository, NoteRevisionsRepository, PollsRepository, PollVotesRepository, DriveFilesRepository, UserProfilesRepository, MiMeta } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { IPoll } from '@/models/Poll.js';
 import { noteVisibilities } from '@/types.js';
@@ -39,6 +39,7 @@ import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mf
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import { normalizeForSearch } from '@/misc/normalize-for-search.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { UtilityService } from '@/core/UtilityService.js';
 
 type Option = {
 	cw?: string | null;
@@ -58,6 +59,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		@Inject(DI.config)
 		private config: Config,
 
+		@Inject(DI.meta)
+		private meta: MiMeta,
+
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
@@ -72,6 +76,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 		@Inject(DI.pollsRepository)
 		private pollsRepository: PollsRepository,
+
+		@Inject(DI.pollVotesRepository)
+		private pollVotesRepository: PollVotesRepository,
 
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
@@ -95,6 +102,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		private activeUsersChart: ActiveUsersChart,
 		private fanoutTimelineService: FanoutTimelineService,
 		private idService: IdService,
+		private utilityService: UtilityService,
 	) { }
 
 	@bindThis
@@ -135,10 +143,32 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			}
 		}
 
+		// bscone: apply the same content checks as note creation to the edited content
+		const nextCw = data.cw !== undefined ? data.cw : note.cw;
+		const nextText = data.text !== undefined ? data.text : note.text;
+		if (this.utilityService.isKeyWordIncluded(
+			this.utilityService.concatNoteContentsForKeyWordCheck({ cw: nextCw, text: nextText, pollChoices: data.poll?.choices }),
+			this.meta.prohibitedWords,
+		)) {
+			throw new IdentifiableError('689ee33f-f97c-479a-ac49-1b9f8140af99', 'Note contains prohibited words');
+		}
+
+		// bscone: public notes containing sensitive words are downgraded to home, as on creation
+		if ((data.visibility ?? note.visibility) === 'public' && note.channelId == null
+			&& this.utilityService.isKeyWordIncluded(nextCw ?? nextText ?? '', this.meta.sensitiveWords)) {
+			data.visibility = 'home';
+		}
+
+		// bscone: channel notes must stay local-only
+		if (note.channelId != null && data.localOnly === false) {
+			throw new IdentifiableError('ebefddac-1838-4731-9701-f022bd539f2f', 'Channel notes must be local only');
+		}
+
 		// Capture current state as a revision before updating
 		await this.createRevision(note, editorId);
 
-		if (data.visibility !== undefined) {
+		// bscone: only cascade when the visibility actually changes (the cascade walks the whole reply/renote tree)
+		if (data.visibility !== undefined && data.visibility !== note.visibility) {
 			await this.updateVisibilityCascadingNotes(note, data);
 		}
 
@@ -151,13 +181,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 		const updatedNote = await this.updateNote(note, data, files);
 
+		// bscone: only signal the edit; clients refetch the note so that server-side visibility rules apply to the new content
 		this.globalEventService.publishNoteStream(note, 'updated', {
-			cw: data.cw,
-			text: data.text,
-			visibility: data.visibility,
 			updatedAt: data.updatedAt,
-			fileIds: data.fileIds,
-			hasPoll: data.poll !== undefined ? data.poll !== null : undefined,
 		});
 
 		setImmediate('post updating', { signal: this.#shutdownController.signal }).then(
@@ -234,6 +260,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 				if (data.poll === null) {
 					// Remove poll
 					if (existingPoll) {
+						await this.pollVotesRepository.delete({ noteId: note.id });
 						await this.pollsRepository.delete({ noteId: note.id });
 					}
 					update.hasPoll = false;
@@ -250,6 +277,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 					};
 
 					if (existingPoll) {
+						// bscone: drop existing votes, their choice indexes refer to the old choices
+						await this.pollVotesRepository.delete({ noteId: note.id });
+
 						// Update existing poll
 						await this.pollsRepository.update({ noteId: note.id }, {
 							...pollData,
@@ -311,7 +341,8 @@ export class NoteUpdateService implements OnApplicationShutdown {
 	@bindThis
 	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, note: MiNote, content: any) {
 		this.apDeliverManagerService.deliverToFollowers(user, content);
-		this.relayService.deliverToRelays(user, content);
+		// bscone: relays only receive public notes, as on creation
+		if (note.visibility === 'public') this.relayService.deliverToRelays(user, content);
 		const remoteUsers = await this.getMentionedRemoteUsers(note);
 		for (const remoteUser of remoteUsers) {
 			this.apDeliverManagerService.deliverToUser(user, content, remoteUser);
@@ -363,7 +394,6 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		for (const cascadingNote of cascadingNotes) {
 			if (cascadingNote.visibility === 'public' && data.visibility !== 'public') {
 				this.globalEventService.publishNoteStream(cascadingNote, 'updated', {
-					visibility: data.visibility,
 					updatedAt: data.updatedAt,
 				});
 
@@ -484,6 +514,25 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			.filter(tag => Array.from(tag).length <= 128)
 			.slice(0, 32)
 			.map(tag => normalizeForSearch(tag));
+	}
+
+	/**
+	 * bscone: whether `meId` may read the revisions of `note`.
+	 * Mirrors the access rules of notes/show and additionally requires the note itself to be visible,
+	 * because revision payloads contain the raw note content.
+	 */
+	@bindThis
+	public async checkRevisionsAccess(note: MiNote, meId: MiUser['id'] | null): Promise<'ok' | 'restrictedByUser' | 'restrictedByServer' | 'invisible'> {
+		if (meId == null) {
+			const author = await this.usersRepository.findOneByOrFail({ id: note.userId });
+			if (author.requireSigninToViewContents) return 'restrictedByUser';
+			if (this.meta.ugcVisibilityForVisitor === 'none') return 'restrictedByServer';
+			if (this.meta.ugcVisibilityForVisitor === 'local' && note.userHost != null) return 'restrictedByServer';
+		}
+
+		if (!await this.noteEntityService.isVisibleForMe(note, meId)) return 'invisible';
+
+		return 'ok';
 	}
 
 	@bindThis

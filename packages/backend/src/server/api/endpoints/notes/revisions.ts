@@ -56,6 +56,24 @@ export const meta = {
 			code: 'NO_SUCH_NOTE',
 			id: 'e1774b54-1d10-4ed8-9afe-3f27e6d1f083',
 		},
+
+		accessDenied: {
+			message: 'You cannot view the revisions of this note.',
+			code: 'ACCESS_DENIED',
+			id: '49c854e4-f50f-4410-b12e-b66fa5c8f1da',
+		},
+
+		contentRestrictedByUser: {
+			message: 'Content restricted by user. Please sign in to view.',
+			code: 'CONTENT_RESTRICTED_BY_USER',
+			id: '4bffe71a-b1ed-4a85-8dcd-bb3c834e7a0d',
+		},
+
+		contentRestrictedByServer: {
+			message: 'Content restricted by server settings. Please sign in to view.',
+			code: 'CONTENT_RESTRICTED_BY_SERVER',
+			id: '8eda4418-b53f-44b7-abf6-d07a9f174c09',
+		},
 	},
 } as const;
 
@@ -81,6 +99,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
 				throw err;
 			});
+
+			// bscone: apply the same visitor restrictions as notes/show in addition to note visibility
+			switch (await this.noteUpdateService.checkRevisionsAccess(note, me?.id ?? null)) {
+				case 'restrictedByUser': throw new ApiError(meta.errors.contentRestrictedByUser);
+				case 'restrictedByServer': throw new ApiError(meta.errors.contentRestrictedByServer);
+				case 'invisible': throw new ApiError(meta.errors.accessDenied);
+			}
 
 			const revisions = await this.noteUpdateService.getRevisions(note.id);
 

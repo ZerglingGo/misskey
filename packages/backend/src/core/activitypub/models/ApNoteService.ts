@@ -351,12 +351,17 @@ export class ApNoteService {
 	}
 
 	@bindThis
-	public async updateNote(value: string | IObject, resolver?: Resolver, silent = false): Promise<boolean> {
+	public async updateNote(value: string | IObject, actor: MiRemoteUser, resolver?: Resolver, silent = false): Promise<boolean> {
 		const uri = typeof value === 'string' ? value : value.id;
 		if (uri == null) throw new Error('uri is null');
 
 		// URIがこのサーバーを指しているならスキップ
 		if (uri.startsWith(this.config.url + '/')) throw new Error('uri points local');
+
+		// bscone: only the signer's own instance may update its notes (same rule as ApInboxService.createNote)
+		if (this.utilityService.extractDbHost(uri) !== this.utilityService.extractDbHost(actor.uri)) {
+			throw new Error('host in actor.uri !== note.id');
+		}
 
 		//#region このサーバーに既に登録されているか
 		const oldNote = await this.notesRepository.findOneBy({ uri });
@@ -372,7 +377,8 @@ export class ApNoteService {
 		const object = await resolver.resolve(value);
 
 		const entryUri = getApId(value);
-		const err = this.validateNote(object, entryUri);
+		// bscone: pass the signer so that attributedTo must match it
+		const err = this.validateNote(object, entryUri, actor);
 		if (err) {
 			this.logger.error(err.message, {
 				resolver: { history: resolver.getHistory() },
@@ -402,8 +408,6 @@ export class ApNoteService {
 		if (note.attributedTo == null) {
 			throw new Error('invalid note.attributedTo: ' + note.attributedTo);
 		}
-
-		const actor = await this.apPersonService.resolvePerson(getOneApId(note.attributedTo), resolver) as MiRemoteUser;
 
 		// 投稿者が凍結されていたらスキップ
 		if (actor.isSuspended) {
@@ -445,7 +449,8 @@ export class ApNoteService {
 		const updateData: any = {
 			cw,
 			text,
-			updatedAt: note.updated ? new Date(note.updated) : new Date(),
+			// bscone: ignore malformed or future timestamps from remote
+			updatedAt: (note.updated && this.idService.isSafeT(new Date(note.updated).valueOf())) ? new Date(note.updated) : new Date(),
 		};
 
 		// Only update fileIds if attachments are present in the update

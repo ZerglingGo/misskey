@@ -80,7 +80,8 @@ export class AutoDeleteNotesProcessorService {
 
 				// 즐겨찾기 보호 설정이 켜져 있으면 즐겨찾기된 노트 제외
 				if (user.autoDeleteKeepFavorites) {
-					queryBuilder.andWhere('NOT EXISTS (SELECT 1 FROM note_favorite WHERE "noteId" = note.id)');
+					// bscone: only the owner's own favorites protect a note
+					queryBuilder.andWhere('NOT EXISTS (SELECT 1 FROM note_favorite WHERE "noteId" = note.id AND "userId" = :userId)', { userId: user.id });
 				}
 
 				const notesToDelete = await queryBuilder

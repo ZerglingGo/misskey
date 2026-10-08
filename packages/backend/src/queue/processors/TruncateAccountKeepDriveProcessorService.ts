@@ -4,13 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Brackets, And, In, MoreThan, Not } from 'typeorm';
+import { And, In, MoreThan, Not, Raw } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { NotesRepository, UserNotePiningsRepository, UsersRepository, NoteFavoritesRepository } from '@/models/_.js';
 import type Logger from '@/logger.js';
 import type { MiNote } from '@/models/Note.js';
 import { bindThis } from '@/decorators.js';
 import { NoteDeleteService } from '@/core/NoteDeleteService.js';
+import { findOwnCascadingNoteIds } from '@/misc/find-own-cascading-note-ids.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
 import type * as Bull from 'bullmq';
 import type { DbUserTruncateJobData } from '../types.js';
@@ -51,14 +52,14 @@ export class TruncateAccountKeepDriveProcessorService {
 
 		const pinings = await this.userNotePiningsRepository.findBy({ userId: user.id });
 		const piningNoteIds = pinings.map(pining => pining.noteId);
-		const cascadingPiningNoteIds = piningNoteIds.length !== 0 ? await this.findCascadingNotes(piningNoteIds) : [];
+		const cascadingPiningNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, piningNoteIds);
 
 		const specifiedNotes = await this.notesRepository.findBy({
 			userId: user.id,
 			visibility: Not(In(['public', 'home', 'followers'])),
 		});
 		const specifiedNoteIds = specifiedNotes.map(note => note.id);
-		const cascadingSpecifiedNoteIds = specifiedNoteIds.length !== 0 ? await this.findCascadingNotes(specifiedNoteIds) : [];
+		const cascadingSpecifiedNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, specifiedNoteIds);
 
 		// 즐겨찾기 보호 옵션이 켜져 있으면 즐겨찾기한 노트도 보호
 		let favoriteNoteIds: MiNote['id'][] = [];
@@ -66,11 +67,13 @@ export class TruncateAccountKeepDriveProcessorService {
 		if (keepFavorites) {
 			const favorites = await this.noteFavoritesRepository.findBy({ userId: user.id });
 			favoriteNoteIds = favorites.map(fav => fav.noteId);
-			cascadingFavoriteNoteIds = favoriteNoteIds.length !== 0 ? await this.findCascadingNotes(favoriteNoteIds) : [];
+			cascadingFavoriteNoteIds = await findOwnCascadingNoteIds(this.notesRepository, user.id, favoriteNoteIds);
 			this.logger.info(`Found ${favoriteNoteIds.length} favorite notes to keep`);
 		}
 
 		const protectedNoteIds = [...piningNoteIds, ...cascadingPiningNoteIds, ...specifiedNoteIds, ...cascadingSpecifiedNoteIds, ...favoriteNoteIds, ...cascadingFavoriteNoteIds];
+		// bscone: pass the protected IDs as one array parameter (NOT IN with many binds can exceed the parameter limit)
+		const notInProtected = Raw(alias => `${alias} <> ALL(:protectedNoteIds)`, { protectedNoteIds });
 
 		let cursor: MiNote['id'] | null = null;
 		while (true) {
@@ -78,9 +81,9 @@ export class TruncateAccountKeepDriveProcessorService {
 				where: {
 					userId: user.id,
 					...(cursor ? {
-						id: And(Not(In(protectedNoteIds)), MoreThan(cursor)),
+						id: And(notInProtected, MoreThan(cursor)),
 					} : {
-						id: Not(In(protectedNoteIds)),
+						id: notInProtected,
 					}),
 				},
 				take: 100,
@@ -96,28 +99,6 @@ export class TruncateAccountKeepDriveProcessorService {
 
 		this.logger.succ('All of notes deleted (drive kept)');
 		return 'Account notes truncated (drive kept)';
-	}
-
-	@bindThis
-	private async findCascadingNotes(noteIds: MiNote['id'][]): Promise<MiNote['id'][]> {
-		const recursive = async (noteIds: MiNote['id'][]): Promise<MiNote['id'][]> => {
-			const query = this.notesRepository.createQueryBuilder('note')
-				.where('note.replyId IN(:...noteIds)', { noteIds })
-				.orWhere(new Brackets(q => {
-					q.where('note.renoteId IN(:...noteIds)', { noteIds })
-						.andWhere('note.text IS NOT NULL');
-				}));
-			const replies = await query.getMany();
-
-			return [
-				...replies.map((reply) => reply.id),
-				...await Promise.all(replies.map(reply => recursive([reply.id]))),
-			].flat();
-		};
-
-		const cascadingNotes: MiNote['id'][] = await recursive(noteIds);
-
-		return cascadingNotes;
 	}
 }
 

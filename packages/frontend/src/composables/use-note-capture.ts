@@ -123,6 +123,46 @@ function pollingSubscribe(props: {
 	});
 }
 
+// bscone: the stream only signals that a note was edited, so fetch the new content through notes/show
+// (which applies visibility rules). Requests are deduplicated per note and spread out to avoid a burst on popular notes.
+const UPDATED_NOTE_REFETCH_MAX_DELAY = 2000;
+const refetchingUpdatedNotes = new Set<Misskey.entities.Note['id']>();
+
+function refetchUpdatedNote(id: Misskey.entities.Note['id']): void {
+	if (refetchingUpdatedNotes.has(id)) return;
+	refetchingUpdatedNotes.add(id);
+
+	window.setTimeout(() => {
+		misskeyApi('notes/show', { noteId: id }).then(note => {
+			globalEvents.emit('noteUpdated', {
+				id,
+				cw: note.cw,
+				text: note.text,
+				visibility: note.visibility,
+				updatedAt: note.updatedAt,
+				files: note.files,
+				fileIds: note.fileIds,
+				poll: note.poll,
+			});
+
+			noteEvents.emit(`noteUpdated:${id}`, {
+				cw: note.cw ?? null,
+				text: note.text,
+				visibility: note.visibility,
+				updatedAt: note.updatedAt,
+				files: note.files,
+				fileIds: note.fileIds,
+				poll: note.poll ?? null,
+				hasPoll: note.poll != null,
+			});
+		}).catch(() => {
+			// the note may have been deleted or become invisible; other stream events handle that
+		}).finally(() => {
+			refetchingUpdatedNotes.delete(id);
+		});
+	}, Math.random() * UPDATED_NOTE_REFETCH_MAX_DELAY);
+}
+
 function realtimeSubscribe(props: {
 	note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>;
 }): void {
@@ -166,23 +206,7 @@ function realtimeSubscribe(props: {
 			}
 
 			case 'updated': {
-				globalEvents.emit('noteUpdated', {
-					id,
-					cw: body.cw,
-					text: body.text,
-					visibility: body.visibility,
-					updatedAt: body.updatedAt,
-					fileIds: body.fileIds ?? undefined,
-				});
-
-				noteEvents.emit(`noteUpdated:${id}`, {
-					cw: body.cw ?? null,
-					text: body.text ?? null,
-					visibility: body.visibility ?? 'public',
-					updatedAt: body.updatedAt,
-					fileIds: body.fileIds,
-					hasPoll: body.hasPoll,
-				});
+				refetchUpdatedNote(id);
 				break;
 			}
 		}
