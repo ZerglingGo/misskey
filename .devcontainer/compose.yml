@@ -7,6 +7,7 @@ services:
     volumes:
       - ../:/workspace:cached
       - node_modules:/workspace/node_modules
+      - claude-config:/home/node/.claude
 
     command: sleep infinity
 
@@ -46,6 +47,7 @@ volumes:
   postgres-data:
   redis-data:
   node_modules:
+  claude-config:
 
 networks:
   internal_network:
