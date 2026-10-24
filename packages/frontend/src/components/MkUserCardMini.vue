@@ -24,7 +24,7 @@ import { prefer } from '@/preferences.js';
 import { i18n } from '@/i18n.js';
 import MkMiniChart from '@/components/MkMiniChart.vue';
 import { misskeyApiGet } from '@/utility/misskey-api.js';
-import { acct } from '@/filters/user.js';
+import { acct } from '@@/js/user.js';
 
 const props = withDefaults(defineProps<{
 	user: Misskey.entities.User;

@@ -37,7 +37,7 @@ import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { IdService } from '@/core/IdService.js';
 import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
 import { extractHashtags } from '@/misc/extract-hashtags.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
+import { normalizeTag } from '@/misc/normalize-tag.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { UtilityService } from '@/core/UtilityService.js';
 
@@ -513,7 +513,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		update.tags = extractHashtags(combinedTokens)
 			.filter(tag => Array.from(tag).length <= 128)
 			.slice(0, 32)
-			.map(tag => normalizeForSearch(tag));
+			.map(tag => normalizeTag(tag));
 	}
 
 	/**
