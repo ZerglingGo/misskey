@@ -44,6 +44,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #key>{{ i18n.ts.license }}</template>
 					<template #value>{{ license }}</template>
 				</MkKeyValue>
+				<!-- bscone: show federated sensitive flag -->
+				<MkKeyValue>
+					<template #key>{{ i18n.ts.sensitive }}</template>
+					<template #value>{{ isSensitive ? i18n.ts.yes : i18n.ts.no }}</template>
+				</MkKeyValue>
 			</div>
 		</div>
 		<div :class="$style.footer">
@@ -72,6 +77,7 @@ const props = defineProps<{
 		host: string,
 		license: string | null,
 		url: string
+		isSensitive?: boolean // bscone: federated sensitive flag
 	},
 }>();
 
@@ -87,6 +93,8 @@ const name = computed(() => props.emoji.name);
 const host = computed(() => props.emoji.host);
 const license = computed(() => props.emoji.license);
 const imgUrl = computed(() => props.emoji.url);
+// bscone: federated sensitive flag
+const isSensitive = computed(() => props.emoji.isSensitive ?? false);
 
 async function done() {
 	await os.apiWithDialog('admin/emoji/copy', {

@@ -62,6 +62,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 						>
 							<template #label>publicUrl</template>
 						</MkInput>
+						<!-- bscone: search by federated sensitive flag -->
+						<MkSelect
+							v-model="querySensitive"
+							:items="[
+								{ label: '-', value: null },
+								{ label: 'true', value: 'true' },
+								{ label: 'false', value: 'false' },
+							]"
+							:class="[$style.col3, $style.row2]"
+						>
+							<template #label>sensitive</template>
+						</MkSelect>
 					</div>
 
 					<hr>
@@ -151,6 +163,7 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/MkInput.vue';
+import MkSelect from '@/components/MkSelect.vue';
 import MkGrid from '@/components/grid/MkGrid.vue';
 import { emptyStrToUndefined, gridSortOrderKeys } from '@/pages/admin/custom-emojis-manager.impl.js';
 import MkFolder from '@/components/MkFolder.vue';
@@ -167,6 +180,7 @@ type GridItem = {
 	url: string;
 	name: string;
 	host: string;
+	isSensitive: boolean; // bscone: federated sensitive flag
 };
 
 function setupGrid(): GridSetting {
@@ -203,6 +217,7 @@ function setupGrid(): GridSetting {
 			{ bindTo: 'name', title: 'name', type: 'text', editable: false, width: 'auto' },
 			{ bindTo: 'host', title: 'host', type: 'text', editable: false, width: 'auto' },
 			{ bindTo: 'license', title: 'license', type: 'text', editable: false, width: 200 },
+			{ bindTo: 'isSensitive', title: 'sensitive', type: 'boolean', editable: false, width: 90 }, // bscone: federated sensitive flag
 			{ bindTo: 'uri', title: 'uri', type: 'text', editable: false, width: 'auto' },
 			{ bindTo: 'publicUrl', title: 'publicUrl', type: 'text', editable: false, width: 'auto' },
 		],
@@ -222,6 +237,7 @@ function setupGrid(): GridSetting {
 									host: target.host!,
 									license: target.license,
 									url: target.publicUrl,
+									isSensitive: target.isSensitive, // bscone: federated sensitive flag
 								},
 							}, {
 								done: () => {
@@ -259,6 +275,7 @@ const queryHost = ref<string | null>(null);
 const queryLicense = ref<string | null>(null);
 const queryUri = ref<string | null>(null);
 const queryPublicUrl = ref<string | null>(null);
+const querySensitive = ref<string | null>(null); // bscone: federated sensitive flag
 const queryLimit = ref<number>(100);
 const previousQuery = ref<string | undefined>(undefined);
 const sortOrders = ref<SortOrder<GridSortOrderKey>[]>([]);
@@ -283,6 +300,7 @@ function onQueryResetButtonClicked() {
 	queryLicense.value = null;
 	queryUri.value = null;
 	queryPublicUrl.value = null;
+	querySensitive.value = null; // bscone: federated sensitive flag
 }
 
 async function onPageChanged(pageNumber: number) {
@@ -361,6 +379,7 @@ async function refreshCustomEmojis() {
 		license: emptyStrToUndefined(queryLicense.value),
 		uri: emptyStrToUndefined(queryUri.value),
 		publicUrl: emptyStrToUndefined(queryPublicUrl.value),
+		isSensitive: querySensitive.value != null ? querySensitive.value === 'true' : undefined, // bscone: federated sensitive flag
 		hostType: 'remote',
 	};
 
@@ -385,6 +404,7 @@ async function refreshCustomEmojis() {
 		name: it.name,
 		license: it.license,
 		host: it.host!,
+		isSensitive: it.isSensitive, // bscone: federated sensitive flag
 	}));
 }
 
